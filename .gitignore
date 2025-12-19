@@ -1,0 +1,8 @@
+# ignore meta_world_logs folder
+metaworld_logs/
+
+# ignore meta_world_models folder
+metaworld_models/
+
+# ignore cache folder
+__pycache__/
