@@ -117,12 +117,12 @@ if __name__ == "__main__":
         env = make_mt10_env(0, SEED, MAX_EPISODE_STEPS)
         eval_env = make_mt10_env(0, SEED + 1000, MAX_EPISODE_STEPS)
 
-    env = VecMonitor(env)
-    eval_env = VecMonitor(env)
+    #env = VecMonitor(env)
+    #eval_env = VecMonitor(env)
 
     # Custom Wrapper Class for Hot Vector Encoding
-    # env = OneHotTaskWrapper(env, ENV_SPEC)
-    # eval_env = OneHotTaskWrapper(eval_env, ENV_SPEC)
+    env = OneHotTaskWrapper(env, ENV_SPEC)
+    eval_env = OneHotTaskWrapper(eval_env, ENV_SPEC)
 
     num_envs = getattr(env, "num_envs", 1)
     print(f" -> {EXPERIMENT} num_envs = {num_envs}")

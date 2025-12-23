@@ -3,6 +3,8 @@ import numpy as np
 # ------------------------------------------------------------
 #  Adapter: Gymnasium VectorEnv (Metaworld)  -> Stable-Baselines3 VecEnv
 # ------------------------------------------------------------
+
+
 class GymnasiumVecEnvAdapter(VecEnv):
     """
     Adapter, der eine gymnasium.vector.VectorEnv (z.B. MT10 via gym.make_vec)
@@ -90,14 +92,14 @@ class GymnasiumVecEnvAdapter(VecEnv):
                 else:
                     for i in range(self.num_envs):
                         list_infos[i][k] = v.item() if v.ndim == 0 else v
-            self.reset_infos = list_infos
-        elif isinstance(info, list):
-            self.reset_infos = info
-        else:
-            self.reset_infos = [dict() for _ in range(self.num_envs)]
+            info = list_infos
+        elif not isinstance(info, list):
+            info = [dict() for _ in range(self.num_envs)]
+
+        self.reset_infos = info
 
         # SB3-VecEnv.reset() gibt nur obs zurück
-        return obs
+        return obs, info
 
     def seed(self, seed=None):
         # Gymnasium-VectorEnv nutzt reset(seed=...)
