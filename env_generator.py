@@ -1,7 +1,6 @@
 import gymnasium as gym
 import metaworld
-from stable_baselines3.common.monitor import Monitor
-from GymnasiumVecEnvAdapter import *
+from training_setup_multitask.WrapperClasses.GymnasiumVecEnvAdapter import *
 
 
 """

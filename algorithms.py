@@ -76,13 +76,13 @@ def model_factory_SAC(env, algorithm: str, seed : int, train_mode: bool, paths):
             policy="MlpPolicy",
             env=env,
             learning_rate=3e-4,
-            buffer_size=1_500,
+            buffer_size=1_000_000,
             learning_starts=0,  # Start training sooner
             batch_size=500,
             tau=0.005,
             gamma=0.99,  # Higher gamma for multi-step tasks
             train_freq=1,
-            gradient_steps=-1,  # Train on all available data
+            gradient_steps=1,  # Train on all available data
             ent_coef='auto',  # Automatic entropy tuning - crucial for SAC
             target_entropy='auto',  # Automatically set target entropy
             use_sde=False,  # State-dependent exploration (can be enabled for more exploration)

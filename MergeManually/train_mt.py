@@ -148,8 +148,8 @@ if __name__ == "__main__":
     # ======================================================
 
     # Create output directories
-    os.makedirs("./metaworld_models", exist_ok=True)
-    os.makedirs("./metaworld_logs", exist_ok=True)
+    os.makedirs("../metaworld_models", exist_ok=True)
+    os.makedirs("../metaworld_logs", exist_ok=True)
 
     print(f"=" * 60)
     print(f"Meta-World Multi-Task Training: {MODEL_BASENAME}")

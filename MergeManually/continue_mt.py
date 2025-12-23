@@ -130,8 +130,8 @@ if __name__ == "__main__":
     LOAD_BEST_MODEL = False       # True = best_MT3/best_model.zip, False = sac_MT3_final.zip
 
     # Pfade
-    MODELS_DIR = "./metaworld_models"
-    LOGS_DIR = "./metaworld_logs"
+    MODELS_DIR = "../metaworld_models"
+    LOGS_DIR = "../metaworld_logs"
 
     best_model_path = f"{MODELS_DIR}/best_{MODEL_BASENAME}/best_model.zip"
     final_model_path = f"{MODELS_DIR}/sac_{MODEL_BASENAME}_final.zip"

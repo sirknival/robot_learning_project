@@ -15,22 +15,16 @@ Paper: "Meta-World: A Benchmark and Evaluation for Multi-Task and Meta Reinforce
 Meta-World+: "An Improved, Standardized, RL Benchmark"
 """
 
-import os
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
-import gymnasium as gym
-import metaworld
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, BaseCallback, \
-    StopTrainingOnRewardThreshold
-from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecMonitor
-from gymnasium.envs.registration import register
+from training_setup_multitask.utilities import metaworld_tasks
+from training_setup_multitask.utilities.ReplayBufferCheckpointCallback import *
+from training_setup_multitask.utilities.debug_printer import *
 
-import metaworld_tasks
-from ReplayBufferCheckpointCallback import *
-from OneHotTaskWrapper import *
+from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import *
+
 from env_generator import *
-from debug_printer import *
 from algorithms import *
-from custom_multitask import *
 
 # from callbacks import checkpoint_callback, eval_callback
 
