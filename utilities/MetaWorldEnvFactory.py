@@ -3,7 +3,6 @@ import metaworld
 from typing import List, Dict, Optional, Union
 from training_setup_multitask.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
 from training_setup_multitask.utilities.MetaworldTasks import MT3_TASKS, MT10_TASKS
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 
 class MetaWorldEnvFactory:
@@ -11,11 +10,13 @@ class MetaWorldEnvFactory:
     Factory-Klasse für Meta-World Environments.
     Unterstützt MT1, MT3, MT10 und custom Curriculum Stages.
     """
+
     def __init__(
             self,
             reward_function_version: str = 'v3',
             vector_strategy: str = 'sync',
             terminate_on_success: bool = False,
+            use_subproc: bool = True,
             verbose: bool = True
     ):
         """
@@ -23,45 +24,109 @@ class MetaWorldEnvFactory:
             reward_function_version: Version der Reward-Funktion ('v2' oder 'v3')
             vector_strategy: Vectorization-Strategie ('sync' oder 'async')
             terminate_on_success: Ob Episode bei Erfolg beendet werden soll
+            use_subproc: Nutze SubprocVecEnv (True) oder DummyVecEnv (False)
             verbose: Ausgaben aktivieren/deaktivieren
         """
         self.reward_function_version = reward_function_version
         self.vector_strategy = vector_strategy
         self.terminate_on_success = terminate_on_success
+        self.use_subproc = use_subproc
         self.verbose = verbose
 
-        self.MT10_tasks = MT10_TASKS
-        self.MT3_tasks = MT3_TASKS
+        self.MT10_TASKS = MT10_TASKS
+        self.MT3_TASKS = MT3_TASKS
 
     def _log(self, message: str):
         """Interne Logging-Funktion"""
         if self.verbose:
             print(f"[EnvFactory] {message}")
 
+    def make_parallel_mt1_envs(
+            self,
+            task_name: str,
+            n_envs: int = 4,
+            seed: int = 0,
+            max_episode_steps: int = 500
+    ):
+        """
+        Erstelle mehrere parallele MT1 Umgebungen für schnelleres Training
+
+        Args:
+            task_name: Name des Tasks
+            n_envs: Anzahl paralleler Environments (empfohlen: 4-8)
+            seed: Base random seed
+            max_episode_steps: maximale Schritte pro Episode
+
+        Returns:
+            DummyVecEnv mit n_envs parallelen Environments
+        """
+        from stable_baselines3.common.vec_env import DummyVecEnv
+
+        if task_name not in self.MT10_TASKS:
+            self._log(f"⚠️  Warning: '{task_name}' not in standard MT10 tasks")
+
+        self._log(f"Creating {n_envs} parallel MT1 environments: {task_name}")
+
+        # Create list of environment creation functions
+        env_fns = []
+        for i in range(n_envs):
+            def _make_env(rank=i):
+                env = gym.make(
+                    'Meta-World/MT1',
+                    env_name=task_name,
+                    seed=seed + rank,
+                    reward_function_version=self.reward_function_version,
+                    max_episode_steps=max_episode_steps,
+                    terminate_on_success=self.terminate_on_success,
+                )
+                return env
+
+            env_fns.append(_make_env)
+
+        # Create vectorized environment
+        vec_env = DummyVecEnv(env_fns)
+
+        self._log(f"✓ {n_envs} parallel MT1 environments created")
+
+        return vec_env
+
     def make_mt1_env(
             self,
             task_name: str,
             seed: int = 0,
             max_episode_steps: int = 500,
-            rank: int = 0
-    ) -> GymnasiumVecEnvAdapter:
+            rank: int = 0,
+            n_envs: int = 1
+    ):
         """
-        Erstelle Single-Task Umgebung (MT1)
+        Erstelle Single-Task Umgebung (MT1) mit optionaler Parallelisierung
 
         Args:
             task_name: Name des Tasks (z.B. "reach-v3", "push-v3")
             seed: Random seed
             max_episode_steps: Maximale Schritte pro Episode
             rank: Environment rank (für parallele Umgebungen)
+            n_envs: Anzahl paralleler Environments (1 = kein Parallel, >1 = parallel)
 
         Returns:
-            Wrapped Gymnasium VecEnv
+            DummyVecEnv mit einem oder mehreren Environments
         """
-        if task_name not in self.MT10_tasks:
+        if n_envs > 1:
+            return self.make_parallel_mt1_envs(
+                task_name=task_name,
+                n_envs=n_envs,
+                seed=seed,
+                max_episode_steps=max_episode_steps
+            )
+
+        from stable_baselines3.common.vec_env import DummyVecEnv
+
+        if task_name not in self.MT10_TASKS:
             self._log(f"⚠️  Warning: '{task_name}' not in standard MT10 tasks")
 
         self._log(f"Creating MT1 environment: {task_name}")
 
+        # gym.make gibt ein einzelnes Environment zurück, kein VecEnv
         def _make_env():
             env = gym.make(
                 'Meta-World/MT1',
@@ -73,10 +138,12 @@ class MetaWorldEnvFactory:
             )
             return env
 
-        env = DummyVecEnv([_make_env])
+        # Wrapping in DummyVecEnv für Kompatibilität mit VecEnv-Interface
+        vec_env = DummyVecEnv([_make_env])
+
         self._log(f"✓ MT1 environment created (seed={seed + rank})")
 
-        return env
+        return vec_env
 
     def make_mt3_env(
             self,
@@ -97,7 +164,7 @@ class MetaWorldEnvFactory:
         Returns:
             Wrapped Gymnasium VecEnv
         """
-        tasks = custom_tasks if custom_tasks else self.MT3_tasks
+        tasks = custom_tasks if custom_tasks else self.MT3_TASKS
 
         if len(tasks) != 3:
             self._log(f"⚠️  Warning: MT3 expects 3 tasks, got {len(tasks)}")
@@ -175,7 +242,7 @@ class MetaWorldEnvFactory:
             raise ValueError("Task list cannot be empty")
 
         # Validiere Tasks
-        invalid_tasks = [t for t in tasks if t not in self.MT10_tasks]
+        invalid_tasks = [t for t in tasks if t not in self.MT10_TASKS]
         if invalid_tasks:
             self._log(f"⚠️  Warning: Unknown tasks: {invalid_tasks}")
 
@@ -240,7 +307,7 @@ class MetaWorldEnvFactory:
                 custom_tasks=stage_tasks
             )
 
-        elif num_tasks == 10 and set(stage_tasks) == set(self.MT10_tasks):
+        elif num_tasks == 10 and set(stage_tasks) == set(self.MT10_TASKS):
             # All standard MT10 tasks
             return self.make_mt10_env(
                 seed=seed,
@@ -263,7 +330,8 @@ class MetaWorldEnvFactory:
             train_seed: int = 0,
             eval_seed: Optional[int] = None,
             max_episode_steps: int = 500,
-            seed_offset: int = 1000
+            seed_offset: int = 1000,
+            n_parallel_envs: int = 1
     ) -> tuple:
         """
         Erstelle Train- und Eval-Environment Paar mit unterschiedlichen Seeds
@@ -274,6 +342,7 @@ class MetaWorldEnvFactory:
             eval_seed: Optional - Seed für Eval Environment (sonst train_seed + seed_offset)
             max_episode_steps: Maximale Schritte pro Episode
             seed_offset: Offset zwischen Train und Eval Seed
+            n_parallel_envs: Anzahl paralleler Training-Environments (nur für MT1)
 
         Returns:
             Tuple (train_env, eval_env)
@@ -287,20 +356,39 @@ class MetaWorldEnvFactory:
 
         self._log(f"Creating train/eval environment pair")
         self._log(f"  Train seed: {train_seed}, Eval seed: {eval_seed}")
+        if n_parallel_envs > 1 and len(tasks) == 1:
+            self._log(f"  Using {n_parallel_envs} parallel training environments")
 
-        train_env = self.make_curriculum_env(
-            stage_tasks=tasks,
-            seed=train_seed,
-            max_episode_steps=max_episode_steps,
-            rank=0
-        )
+        # Spezielle Behandlung für MT1 mit Parallelisierung
+        if len(tasks) == 1 and n_parallel_envs > 1:
+            train_env = self.make_mt1_env(
+                task_name=tasks[0],
+                seed=train_seed,
+                max_episode_steps=max_episode_steps,
+                n_envs=n_parallel_envs
+            )
+            # Eval bleibt einzeln
+            eval_env = self.make_mt1_env(
+                task_name=tasks[0],
+                seed=eval_seed,
+                max_episode_steps=max_episode_steps,
+                n_envs=1
+            )
+        else:
+            # Standard: Nutze curriculum_env für automatische Auswahl
+            train_env = self.make_curriculum_env(
+                stage_tasks=tasks,
+                seed=train_seed,
+                max_episode_steps=max_episode_steps,
+                rank=0
+            )
 
-        eval_env = self.make_curriculum_env(
-            stage_tasks=tasks,
-            seed=eval_seed,
-            max_episode_steps=max_episode_steps,
-            rank=0
-        )
+            eval_env = self.make_curriculum_env(
+                stage_tasks=tasks,
+                seed=eval_seed,
+                max_episode_steps=max_episode_steps,
+                rank=0
+            )
 
         self._log("✓ Train/Eval pair created")
 
@@ -316,7 +404,7 @@ class MetaWorldEnvFactory:
         Returns:
             Dictionary mit Task-Informationen
         """
-        if task_name not in self.MT10_tasks:
+        if task_name not in self.MT10_TASKS:
             return {
                 "name": task_name,
                 "valid": False,
@@ -349,8 +437,8 @@ class MetaWorldEnvFactory:
         Returns:
             Tuple (valid_tasks, invalid_tasks)
         """
-        valid_tasks = [t for t in tasks if t in self.MT10_tasks]
-        invalid_tasks = [t for t in tasks if t not in self.MT10_tasks]
+        valid_tasks = [t for t in tasks if t in self.MT10_TASKS]
+        invalid_tasks = [t for t in tasks if t not in self.MT10_TASKS]
 
         if invalid_tasks:
             self._log(f"⚠️  Invalid tasks found: {invalid_tasks}")
