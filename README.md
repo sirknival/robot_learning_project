@@ -11,7 +11,6 @@
 - [Performance Optimization](#performance-optimization)
 - [Advanced Features](#advanced-features)
 - [Examples](#examples)
-- [Troubleshooting](#troubleshooting)
 
 ---
 
