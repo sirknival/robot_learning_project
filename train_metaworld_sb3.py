@@ -17,26 +17,41 @@ Meta-World+: "An Improved, Standardized, RL Benchmark"
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
-from training_setup_multitask.utilities import metaworld_tasks
-from training_setup_multitask.utilities.ReplayBufferCheckpointCallback import *
-from training_setup_multitask.utilities.debug_printer import *
+from training_setup_multitask.utilities import MetaworldTasks
+# from training_setup_multitask.utilities.ReplayBufferCheckpointCallback import *
+from training_setup_multitask.utilities.DebugPrinter import *
 
-from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import *
+from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
+from training_setup_multitask.utilities.CurriculumConfig import CurriculumConfig
 
-from env_generator import *
-from algorithms import *
+from training_setup_multitask.utilities.MetaWorldEnvFactory import *
+from training_setup_multitask.utilities.algorithms import *
+from training_setup_multitask.utilities.TransferLearningManager import TransferLearningManager
+from training_setup_multitask.Callbacks.ProgressiveTaskCallback import ProgressiveTaskCallback
 
 # from callbacks import checkpoint_callback, eval_callback
 
 if __name__ == "__main__":
     # ==================== CONFIGURATION ====================
+    # Training Strategy
+    TRAINING_MODE = "PROGRESSIVE"  # "SEQUENTIAL", "PROGRESSIVE", or "MIXED"
+    USE_TRANSFER_LEARNING = True  # Nutze vortrainiertes Modell als Basis
+    USE_CURRICULUM = True  # Nutze Curriculum Learning
+
+    # Pretrained Model (für Transfer Learning)
+    PRETRAINED_MODEL_PATH = None  # "./metaworld_models/MT10_SAC_5M.zip"
+
     EXPERIMENT = "MT10"  # "MT1 (then, task name has to be specified too.), MT3, MT10
     TASK_NAME = "reach-v3"  # Change to other MT1 tasks like "push-v3", "pick-place-v3", etc.
     ALGORITHM = "SAC"  # "TD3" or "DDPG" - SAC recommended for Meta-World
 
     # Environment Settings
-    # USE_TRUE_PARALLEL = False  # Set to False for dummy vec environment
     SEED = 42
+
+    # Curriculum Learning Settings
+    CURRICULUM_STAGE = 0  # Start mit Stage 0 (einfachste Tasks)
+    MIN_STEPS_PER_STAGE = 200000  # Minimum Steps pro Curriculum Stage
+    STAGE_EVAL_FREQ = 10000
 
     # Training Settings
     # Training Mode [False = Start New Training (Phase 1) / True  = Continue training  (Phase 2 --> loads buffer model)]
@@ -75,136 +90,142 @@ if __name__ == "__main__":
     # Debug Settings
     DEBUG = True
     # ======================================================
-    # Register custom multitask
-    """register(
-        id='Meta-World/custom-mt-envs',
-        entry_point='custom_multitask.CustomMTEnv',
-    )"""
 
     # Create output directories
     os.makedirs("./metaworld_models", exist_ok=True)
     os.makedirs("./metaworld_logs", exist_ok=True)
     os.makedirs(f"./metaworld_models/checkpoints_{EXPERIMENT}", exist_ok=True)
     os.makedirs(f"./metaworld_models/checkpoints_{EXPERIMENT}_buffer", exist_ok=True)
+    os.makedirs(f"./metaworld_models/transfer_checkpoints", exist_ok=True)
 
     if DEBUG:
         print_start_setup(EXPERIMENT, ALGORITHM, CONTINUE_TRAINING)
 
-    # Define Tasks
-    if EXPERIMENT == 'MT1':
-        ENV_SPEC = TASK_NAME
-    elif EXPERIMENT == 'MT3':
-        ENV_SPEC = metaworld_tasks.MT3_TASKS
-    elif EXPERIMENT == 'MT10':
-        ENV_SPEC = metaworld_tasks.MT10_TASKS
-    else:
-        raise ValueError("Invalid EXPERIMENT setting.")
+    # Initialize Transfer Learning Manager
+    transfer_manager = TransferLearningManager(PRETRAINED_MODEL_PATH)
 
-    # ------------------ MT3/10-Umgebungen ------------------
+    # Get curriculum configuration
+    curriculum_config = CurriculumConfig()
 
-    print(f"Creating {EXPERIMENT} training and evaluation environments ...")
-    if EXPERIMENT == 'MT3':
+    # Determine task list based on training mode
+    if TRAINING_MODE == "SEQUENTIAL":
+        # Train tasks one by one in order of difficulty
+        sorted_tasks = sorted(
+            MT10_TASKS,
+            key=lambda x: curriculum_config.TASK_DIFFICULTY[x]
+        )
+        current_tasks = [sorted_tasks[CURRICULUM_STAGE]]
+        print(f"Sequential Training - Current Task: {current_tasks[0]}")
+
+    elif TRAINING_MODE == "PROGRESSIVE":
+        # Use curriculum stages
+        current_tasks = curriculum_config.CURRICULUM_STAGES[CURRICULUM_STAGE]
+        print(f"Progressive Training - Stage {CURRICULUM_STAGE + 1}/{len(curriculum_config.CURRICULUM_STAGES)}")
+        print(f"Tasks: {current_tasks}")
+
+    else:  # MIXED
+        # Start with easier tasks, gradually add harder ones
+        current_tasks = MT10_TASKS[:3 + CURRICULUM_STAGE]
+        print(f"Mixed Training - {len(current_tasks)} tasks")
+
+    # Create environments based on current curriculum stage
+    print(f"\nCreating environments for {len(current_tasks)} task(s)...")
+
+    if len(current_tasks) == 1:
+        # Single task environment
+        env = make_mt1_env(current_tasks[0], SEED, MAX_EPISODE_STEPS)
+        eval_env = make_mt1_env(current_tasks[0], SEED + 1000, MAX_EPISODE_STEPS)
+    elif len(current_tasks) <= 3:
+        # Small multi-task (MT3-like)
         env = make_mt3_env(0, SEED, MAX_EPISODE_STEPS)
         eval_env = make_mt3_env(0, SEED + 1000, MAX_EPISODE_STEPS)
-
-    if EXPERIMENT == 'MT10':
+    else:
+        # Full MT10
         env = make_mt10_env(0, SEED, MAX_EPISODE_STEPS)
         eval_env = make_mt10_env(0, SEED + 1000, MAX_EPISODE_STEPS)
 
-    #env = VecMonitor(env)
-    #eval_env = VecMonitor(env)
-
-    # Custom Wrapper Class for Hot Vector Encoding
-    env = OneHotTaskWrapper(env, ENV_SPEC)
-    eval_env = OneHotTaskWrapper(eval_env, ENV_SPEC)
+    # Apply task wrappers
+    env = OneHotTaskWrapper(env, current_tasks)
+    eval_env = OneHotTaskWrapper(eval_env, current_tasks)
 
     num_envs = getattr(env, "num_envs", 1)
-    print(f" -> {EXPERIMENT} num_envs = {num_envs}")
+    print(f"✓ Created {num_envs} parallel environment(s)")
 
-    """
-    if USE_TRUE_PARALLEL:
-        print("Not implemented yet")
-        env = SubprocVecEnv(
-            [lambda i=i: make_mt_env(ENV_SPEC, i, seed=SEED, max_episode_steps=MAX_EPISODE_STEPS)
-             for i in range(N_ENVS)],
-            start_method='spawn'
-        )
-
-    else:
-        # Create training environment
-        print("Creating training environment...")
-        train_env = SubprocVecEnv(
-            [make_env(task_name, seed=SEED + i)
-             for i, task_name in enumerate(ENV_SPEC)],
-            start_method="forkserver"
-        )
-
-        env = VecMonitor(train_env)  # sb3 wrapper (Gymnasium VectorEnv  -> Stable-Baselines3 VecEnv)
-
-        # Create evaluation environment
-        print("Creating evaluation environment...")
-        eval_env = SubprocVecEnv(
-            [make_env(task_name, seed=SEED + 1000 + i, max_episode_steps=MAX_EPISODE_STEPS)
-             for i, task_name in enumerate(ENV_SPEC)],
-            start_method="forkserver"
-        )
-        eval_env = VecMonitor(eval_env)
-    """
-
-    # Get action space dimensions
-    if hasattr(env, "single_action_space"):
-        action_space = env.single_action_space
-    else:
-        action_space = env.action_space
-    n_actions = action_space.shape[0]
-
-    # Initialize the RL algorithm
+    # Initialize or load model
     print(f"\nInitializing {ALGORITHM} agent...")
-    if ALGORITHM == "TD3":
-        model = model_factory_TD3(n_actions, env, ALGORITHM, SEED)
 
-    elif ALGORITHM == "DDPG":
-        model = model_factory_DDPG(n_actions, env, ALGORITHM, SEED)
+    if USE_TRANSFER_LEARNING and PRETRAINED_MODEL_PATH:
+        # Load pretrained model for transfer learning
+        from stable_baselines3 import SAC, TD3, DDPG
 
-    elif ALGORITHM == "SAC":
-        model = model_factory_SAC(env, ALGORITHM, SEED, CONTINUE_TRAINING, paths_dict)
+        algorithm_class = {"SAC": SAC, "TD3": TD3, "DDPG": DDPG}[ALGORITHM]
+        model = transfer_manager.load_pretrained_model(
+            algorithm_class,
+            env,
+            PRETRAINED_MODEL_PATH
+        )
+
+        if model:
+            # Fine-tune for new tasks
+            model = transfer_manager.fine_tune_for_new_tasks(
+                model,
+                current_tasks,
+                learning_rate_multiplier=0.3
+            )
     else:
-        raise ValueError(f"Unknown algorithm: {ALGORITHM}")
+        # Create new model from scratch
+        if ALGORITHM == "SAC":
+            model = model_factory_SAC(env, ALGORITHM, SEED, CONTINUE_TRAINING, paths_dict)
+        elif ALGORITHM == "TD3":
+            action_space = env.single_action_space if hasattr(env, "single_action_space") else env.action_space
+            n_actions = action_space.shape[0]
+            model = model_factory_TD3(n_actions, env, ALGORITHM, SEED)
+        elif ALGORITHM == "DDPG":
+            action_space = env.single_action_space if hasattr(env, "single_action_space") else env.action_space
+            n_actions = action_space.shape[0]
+            model = model_factory_DDPG(n_actions, env, ALGORITHM, SEED)
+        else:
+            raise ValueError(f"Unknown algorithm: {ALGORITHM}")
 
     checkpoint_callback = CheckpointCallback(
         save_freq=CHECKPOINT_FREQ,
-        save_path=f"./metaworld_models/checkpoints_{TASK_NAME}/",
-        name_prefix=f"{ALGORITHM.lower()}_{TASK_NAME}",
+        save_path=f"./metaworld_models/checkpoints_{EXPERIMENT}/",
+        name_prefix=f"{ALGORITHM.lower()}_stage{CURRICULUM_STAGE}",
         verbose=1
     )
 
-    # Evaluate every EVAL_FREQ steps
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=f"./metaworld_models/best_{TASK_NAME}/",
-        log_path=f"./metaworld_logs/eval_{TASK_NAME}/",
+        best_model_save_path=f"./metaworld_models/best_{EXPERIMENT}/",
+        log_path=f"./metaworld_logs/eval_{EXPERIMENT}/",
         eval_freq=EVAL_FREQ,
-        n_eval_episodes=N_EVAL_EPISODES,  # More episodes for robust evaluation
+        n_eval_episodes=N_EVAL_EPISODES,
         deterministic=True,
         render=False,
         verbose=1,
         warn=False
     )
 
-    buffer_checkpoint_callback = ReplayBufferCheckpointCallback(
-        save_freq=CHECKPOINT_FREQ,
-        save_path=f"./metaworld_models/checkpoints_{EXPERIMENT}_buffer/",
-        name_prefix=f"{ALGORITHM.lower()}_{EXPERIMENT}_buffer",
-        verbose=1,
-    )
+    callbacks = [eval_callback, checkpoint_callback]
+
+    # Add curriculum callback if using progressive training
+    if USE_CURRICULUM and TRAINING_MODE == "PROGRESSIVE":
+        curriculum_callback = ProgressiveTaskCallback(
+            curriculum_stages=curriculum_config.CURRICULUM_STAGES,
+            stage_thresholds=curriculum_config.STAGE_THRESHOLDS,
+            eval_freq=STAGE_EVAL_FREQ,
+            min_steps_per_stage=MIN_STEPS_PER_STAGE,
+            verbose=1
+        )
+        callbacks.append(curriculum_callback)
 
     if DEBUG:
         print_training_start(model, TASK_NAME, ALGORITHM, total_timesteps, SEED, MAX_EPISODE_STEPS, NORMALIZE_REWARD,
-                             EVAL_FREQ, N_EVAL_EPISODES, CHECKPOINT_FREQ, SEL_TRAIN_PHASE, num_envs, action_space)
+                             EVAL_FREQ, N_EVAL_EPISODES, CHECKPOINT_FREQ, SEL_TRAIN_PHASE, num_envs, env.action_space)
 
     callbacks = [eval_callback, checkpoint_callback]
-    if ALGORITHM in ["SAC", "TD3", "DDPG"]:
-        callbacks.append(buffer_checkpoint_callback)
+    # if ALGORITHM in ["SAC", "TD3", "DDPG"]:
+    #    callbacks.append(buffer_checkpoint_callback)
 
     model.learn(
         total_timesteps=total_timesteps,
@@ -214,14 +235,21 @@ if __name__ == "__main__":
         reset_num_timesteps=not CONTINUE_TRAINING
     )
 
-    # Save the final model
-    print("\nSaving final model...")
-    model.save(paths_dict[model_phase]["model"])
-    model.save_replay_buffer(paths_dict[model_phase]["buffer"])
-    print(f"Model saved to: {paths_dict[model_phase]['model']}.zip")
-    print(f"Replay buffer saved to: {paths_dict[model_phase]['buffer']}")
+    # Save final model
+    print("\n" + "=" * 70)
+    print("SAVING FINAL MODEL")
+    model.save(paths_dict["second"]["model"])
+    model.save_replay_buffer(paths_dict["second"]["buffer"])
+    print(f"✓ Model saved to: {paths_dict['second']['model']}.zip")
+    print(f"✓ Replay buffer saved to: {paths_dict['second']['buffer']}")
 
-    # model.save(f"./metaworld_models/{ALGORITHM.lower()}_{TASK_NAME}_final")
+    # Save transfer checkpoint
+    transfer_manager.save_transfer_checkpoint(
+        model,
+        stage=CURRICULUM_STAGE,
+        tasks=current_tasks,
+        save_path="./metaworld_models/transfer_checkpoints"
+    )
 
     if DEBUG:
         print_training_finished(TASK_NAME, ALGORITHM)
