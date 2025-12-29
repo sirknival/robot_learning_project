@@ -29,6 +29,7 @@ from training_setup_multitask.utilities.DebugPrinter import DebugPrinter
 from training_setup_multitask.utilities.CurriculumConfig import CurriculumConfig
 from training_setup_multitask.utilities.TransferLearningManager import TransferLearningManager
 from training_setup_multitask.utilities.MetaWorldEnvFactory import MetaWorldEnvFactory
+from training_setup_multitask.utilities.MetaWorldEvaluator import MetaWorldEvaluator
 from training_setup_multitask.utilities.algorithms import model_factory_SAC, model_factory_TD3, model_factory_DDPG
 from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
 from training_setup_multitask.Callbacks.ProgressiveTaskCallback import ProgressiveTaskCallback
@@ -39,9 +40,9 @@ if __name__ == "__main__":
 
     # -------------------- Training Strategy --------------------
     TRAINING_MODE = "SEQUENTIAL"  # Options: "SEQUENTIAL", "PROGRESSIVE", "MIXED"
-    USE_TRANSFER_LEARNING = False  # Use pretrained model as starting point
+    USE_TRANSFER_LEARNING = True  # Use pretrained model as starting point
     USE_CURRICULUM = True          # Enable curriculum learning with automatic stage transitions
-    PRETRAINED_MODEL_PATH = None   # Path to pretrained model (e.g., "./metaworld_models/MT10_SAC_5M.zip")
+    PRETRAINED_MODEL_PATH = './metaworld_models/MT10_CURRICULUM_SAC_5M'   # Path to pretrained model (e.g., "<./metaworld_models/MT10_SAC_5M.zip")
     USE_SUBPROC_VEC_ENV = True     # Use SubprocVecEnv (True) for faster multi-processing or DummyVecEnv (False)
 
     # -------------------- Experiment Setup --------------------
@@ -53,8 +54,8 @@ if __name__ == "__main__":
 
     # -------------------- Curriculum Settings --------------------
     CURRICULUM_STAGE = 0           # Starting curriculum stage (0 = easiest tasks)
-    MIN_STEPS_PER_STAGE = 200000   # Minimum training steps before stage transition
-    STAGE_EVAL_FREQ = 10000        # Evaluate performance every N steps for stage transitions
+    MIN_STEPS_PER_STAGE = 2000 # 200000   # Minimum training steps before stage transition
+    STAGE_EVAL_FREQ = 1000        # Evaluate performance every N steps for stage transitions
 
     # -------------------- Training Phases --------------------
     CONTINUE_TRAINING = False      # False = new training, True = resume from checkpoint
@@ -62,7 +63,7 @@ if __name__ == "__main__":
 
     # Training phases defined in millions of steps
     TRAIN_PHASES = {
-        1: {"start": 0, "end": 5},    # Phase 1: 0 -> 5M steps
+        1: {"start": 5, "end": 5},    # Phase 1: 0 -> 5M steps
         2: {"start": 5, "end": 10},   # Phase 2: 5 -> 10M steps
         3: {"start": 10, "end": 20},  # Phase 3: 10 -> 20M steps
     }
@@ -72,7 +73,7 @@ if __name__ == "__main__":
     NORMALIZE_REWARD = False       # Normalize rewards (enable if training is unstable)
 
     # -------------------- Evaluation & Checkpointing --------------------
-    EVAL_FREQ = 10000              # Evaluate model every N steps
+    EVAL_FREQ = 1000              # Evaluate model every N steps
     N_EVAL_EPISODES = 20           # Number of episodes for evaluation
     CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     }
 
     model_phase = "start" if not CONTINUE_TRAINING else "end"
-    total_timesteps = int(TRAIN_PHASES[SEL_TRAIN_PHASE][model_phase] * 1e6)
+    total_timesteps = int(TRAIN_PHASES[SEL_TRAIN_PHASE][model_phase] * 1e4)
 
     # -------------------- Create Directories --------------------
     os.makedirs("./metaworld_models", exist_ok=True)
@@ -152,7 +153,7 @@ if __name__ == "__main__":
 
     elif EXPERIMENT == "MT3":
         # Fixed 3-task training (default MT3 tasks)
-        current_tasks = env_factory.DEFAULT_MT3_TASKS
+        current_tasks = env_factory.MT3_TASKS
 
         if DEBUG:
             printer.print_section("MT3 Training - Three Tasks")
@@ -418,6 +419,21 @@ if __name__ == "__main__":
 
     train_env.close()
     eval_env.close()
+
+    final_evaluator = MetaWorldEvaluator(
+        task_list=current_tasks,
+        max_episode_steps=200
+    )
+
+    mean_reward, success_rate, details = final_evaluator.evaluate(
+        model=model,
+        num_episodes_per_task=20  # Mehr Episoden für Genauigkeit
+    )
+
+    print(f"Gesamt Success Rate: {success_rate * 100:.2f}%")
+    # Details anzeigen, wenn gewünscht
+    for task, stats in details.items():
+         print(f"{task}: {stats['success']*100}%")
 
     if DEBUG:
         printer.print_success("Training completed successfully!")
