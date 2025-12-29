@@ -4,8 +4,6 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
 
 
-# ... Hier steht deine OneHotTaskWrapper Klasse ...
-
 class MetaWorldEvaluator:
     def __init__(self, task_list, max_episode_steps=200, seed=42):
         """
@@ -33,7 +31,6 @@ class MetaWorldEvaluator:
                 max_episode_steps=self.max_episode_steps,
                 terminate_on_success=False,
             )
-            # WICHTIG: Damit dein Wrapper den Namen findet (siehe _extract_task_name Versuch 2)
             env.unwrapped.task_name = task_name
             return env
 
@@ -53,13 +50,10 @@ class MetaWorldEvaluator:
             task_rewards = []
             task_successes = []
 
-            # 1. Basis VecEnv erstellen (mit 1 Environment für den aktuellen Task)
-            # Wir nutzen DummyVecEnv, da dein Wrapper ein VecEnv erwartet
             base_venv = DummyVecEnv([self._make_env_fn(task_name)])
 
-            # 2. Deinen Wrapper anwenden
-            # Er sorgt für das One-Hot Encoding basierend auf self.task_list
-            eval_env = OneHotTaskWrapper(base_venv, self.task_list)
+            # ToDO do not hardcode number of different tasks
+            eval_env = OneHotTaskWrapper(base_venv, self.task_list, 10)
 
             # Loop über Episoden
             for i in range(num_episodes_per_task):

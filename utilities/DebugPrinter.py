@@ -40,7 +40,6 @@ class DebugPrinter:
             self,
             experiment: str,
             algorithm: str,
-            train_mode: bool,
             training_mode: Optional[str] = None,
             use_transfer: bool = False,
             use_curriculum: bool = False
@@ -71,9 +70,6 @@ class DebugPrinter:
                 features.append("Curriculum Learning")
             self._print(f"Features: {', '.join(features)}")
 
-        self._print(
-            f"Mode: {'Resume Training' if train_mode else 'Initial Training'}"
-        )
         self._print(self.separator)
 
     def print_curriculum_info(
@@ -149,7 +145,6 @@ class DebugPrinter:
             eval_freq: int,
             n_eval_eps: int,
             checkpoint_freq: int,
-            train_phase: int,
             num_envs: int,
             action_space: np.ndarray,
             current_tasks: Optional[List[str]] = None
@@ -180,7 +175,6 @@ class DebugPrinter:
         self._print(f"  Total Timesteps: {time_steps:,}")
         self._print(f"  Seed: {seed}")
         self._print(f"  Algorithm: {algorithm}")
-        self._print(f"  Training Phase: {train_phase}")
         self._print(f"  Parallel Environments: {num_envs}")
 
         # Task Information

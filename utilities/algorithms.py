@@ -69,49 +69,32 @@ def model_factory_DDPG(n_actions, env, algorithm: str, seed : int ):
     return model
 
 
-def model_factory_SAC(env, algorithm: str, seed : int, train_mode: bool, paths):
+def model_factory_SAC(env, algorithm: str, seed: int):
     # SAC - Recommended for Meta-World (better exploration)
-    if not train_mode:
-        model = SAC(
-            policy="MlpPolicy",
-            env=env,
-            learning_rate=3e-4,
-            buffer_size=1_000_000,
-            learning_starts=0,  # Start training sooner
-            batch_size=500,
-            tau=0.005,
-            gamma=0.99,  # Higher gamma for multi-step tasks
-            train_freq=1,
-            gradient_steps=1,  # Train on all available data
-            ent_coef='auto',  # Automatic entropy tuning - crucial for SAC
-            target_entropy='auto',  # Automatically set target entropy
-            use_sde=False,  # State-dependent exploration (can be enabled for more exploration)
-            policy_kwargs=dict(
-                net_arch=[400, 400],  # Deeper network
-                activation_fn=torch.nn.ReLU,
-                log_std_init=-3,  # Initial exploration level
-            ),
-            tensorboard_log=f"./metaworld_logs/{algorithm}/",
-            verbose=1,
-            device="auto",
-            seed=seed,
-        )
-    else:
-        # Continue with training in case modell and replay-buffer is available
-        if not os.path.exists(paths['first']['model'] + ".zip"):
-            raise FileNotFoundError(
-                f"Can't find model in order to continue training: {paths['first']['model']}.zip"
-            )
-        if not os.path.exists(paths['first']['buffer']):
-            raise FileNotFoundError(
-                f"Can't find replay buffer in order to continue training: {paths['first']['buffer']}"
-            )
-
-        print(f"Loading model from {paths['first']['model']}.zip ...")
-        model = SAC.load(paths['first']['model'] + ".zip", env=env)
-
-        print(f"Loading replay buffer from {paths['first']['buffer']} ...")
-        model.load_replay_buffer(paths['first']['buffer'])
+    model = SAC(
+        policy="MlpPolicy",
+        env=env,
+        learning_rate=3e-4,
+        buffer_size=1_000_000,
+        learning_starts=0,  # Start training sooner
+        batch_size=500,
+        tau=0.005,
+        gamma=0.99,  # Higher gamma for multi-step tasks
+        train_freq=1,
+        gradient_steps=1,  # Train on all available data
+        ent_coef='auto',  # Automatic entropy tuning - crucial for SAC
+        target_entropy='auto',  # Automatically set target entropy
+        use_sde=False,  # State-dependent exploration (can be enabled for more exploration)
+        policy_kwargs=dict(
+            net_arch=[400, 400],  # Deeper network
+            activation_fn=torch.nn.ReLU,
+            log_std_init=-3,  # Initial exploration level
+        ),
+        tensorboard_log=f"./metaworld_logs/{algorithm}/",
+        verbose=1,
+        device="auto",
+        seed=seed,
+    )
 
     return model
 

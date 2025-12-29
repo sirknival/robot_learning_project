@@ -42,7 +42,7 @@ if __name__ == "__main__":
     TRAINING_MODE = "SEQUENTIAL"  # Options: "SEQUENTIAL", "PROGRESSIVE", "MIXED"
     USE_TRANSFER_LEARNING = True  # Use pretrained model as starting point
     USE_CURRICULUM = True          # Enable curriculum learning with automatic stage transitions
-    PRETRAINED_MODEL_PATH = './metaworld_models/MT10_CURRICULUM_SAC_5M'   # Path to pretrained model (e.g., "<./metaworld_models/MT10_SAC_5M.zip")
+    PRETRAINED_MODEL_PATH = './metaworld_models/MT10k_SAC_5M'   # Path to pretrained model (e.g., "<./metaworld_models/MT10_SAC_5M.zip")
     USE_SUBPROC_VEC_ENV = True     # Use SubprocVecEnv (True) for faster multi-processing or DummyVecEnv (False)
 
     # -------------------- Experiment Setup --------------------
@@ -51,22 +51,13 @@ if __name__ == "__main__":
     ALGORITHM = "SAC"               # Options: "SAC", "TD3", "DDPG" (SAC recommended)
     SEED = 42                       # Random seed for reproducibility
     N_PARALLEL_ENVS = 1             # Number of parallel environments (1-10, higher = faster training)
+    MAX_TASKS_IN_PROJECT = 10       # Für MT10 Projekt; Do not touch!
+    TOTAL_TIMESTEPS = 5 * 1e4       # Number of total time-steps while training
 
     # -------------------- Curriculum Settings --------------------
-    CURRICULUM_STAGE = 0           # Starting curriculum stage (0 = easiest tasks)
+    CURRICULUM_STAGE = 1           # Starting curriculum stage (0 = easiest tasks)
     MIN_STEPS_PER_STAGE = 2000 # 200000   # Minimum training steps before stage transition
     STAGE_EVAL_FREQ = 1000        # Evaluate performance every N steps for stage transitions
-
-    # -------------------- Training Phases --------------------
-    CONTINUE_TRAINING = False      # False = new training, True = resume from checkpoint
-    SEL_TRAIN_PHASE = 1            # Select training phase (1, 2, or 3)
-
-    # Training phases defined in millions of steps
-    TRAIN_PHASES = {
-        1: {"start": 5, "end": 5},    # Phase 1: 0 -> 5M steps
-        2: {"start": 5, "end": 10},   # Phase 2: 5 -> 10M steps
-        3: {"start": 10, "end": 20},  # Phase 3: 10 -> 20M steps
-    }
 
     # -------------------- Environment Settings --------------------
     MAX_EPISODE_STEPS = 500        # Maximum steps per episode
@@ -84,19 +75,11 @@ if __name__ == "__main__":
 
     # -------------------- Setup Paths --------------------
     MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}"
+    # ToDo remove hardcoding 1e4, dev Pur
     paths_dict = {
-        "start": {
-            "model": f"./metaworld_models/{MODEL_BASENAME}_{TRAIN_PHASES[SEL_TRAIN_PHASE]['start']}M",
-            "buffer": f"./metaworld_models/{MODEL_BASENAME}_{TRAIN_PHASES[SEL_TRAIN_PHASE]['start']}M_replay.pkl"
-        },
-        "end": {
-            "model": f"./metaworld_models/{MODEL_BASENAME}_{TRAIN_PHASES[SEL_TRAIN_PHASE]['end']}M",
-            "buffer": f"./metaworld_models/{MODEL_BASENAME}_{TRAIN_PHASES[SEL_TRAIN_PHASE]['end']}M_replay.pkl"
-        }
+            "model": f"./metaworld_models/{MODEL_BASENAME}_{TOTAL_TIMESTEPS / 1e4}M",
+            "buffer": f"./metaworld_models/{MODEL_BASENAME}_{TOTAL_TIMESTEPS / 1e4}M_replay.pkl"
     }
-
-    model_phase = "start" if not CONTINUE_TRAINING else "end"
-    total_timesteps = int(TRAIN_PHASES[SEL_TRAIN_PHASE][model_phase] * 1e4)
 
     # -------------------- Create Directories --------------------
     os.makedirs("./metaworld_models", exist_ok=True)
@@ -114,7 +97,6 @@ if __name__ == "__main__":
     printer.print_start_setup(
         experiment=EXPERIMENT,
         algorithm=ALGORITHM,
-        train_mode=CONTINUE_TRAINING,
         training_mode=TRAINING_MODE,
         use_transfer=USE_TRANSFER_LEARNING,
         use_curriculum=USE_CURRICULUM
@@ -225,8 +207,8 @@ if __name__ == "__main__":
     )
 
     # Apply one-hot task encoding wrapper
-    train_env = OneHotTaskWrapper(train_env, current_tasks)
-    eval_env = OneHotTaskWrapper(eval_env, current_tasks)
+    train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS_IN_PROJECT)
+    eval_env = OneHotTaskWrapper(eval_env, current_tasks, MAX_TASKS_IN_PROJECT)
 
     num_envs = getattr(train_env, "num_envs", 1)
 
@@ -270,7 +252,7 @@ if __name__ == "__main__":
     if not USE_TRANSFER_LEARNING or not model:
         # Create new model from scratch
         if ALGORITHM == "SAC":
-            model = model_factory_SAC(train_env, ALGORITHM, SEED, CONTINUE_TRAINING, paths_dict)
+            model = model_factory_SAC(train_env, ALGORITHM, SEED)
         elif ALGORITHM == "TD3":
             action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") else train_env.action_space
             n_actions = action_space.shape[0]
@@ -330,14 +312,13 @@ if __name__ == "__main__":
             model=model,
             task_name=EXPERIMENT,
             algorithm=ALGORITHM,
-            time_steps=total_timesteps,
+            time_steps=TOTAL_TIMESTEPS,
             seed=SEED,
             max_eps_steps=MAX_EPISODE_STEPS,
             norm_reward=NORMALIZE_REWARD,
             eval_freq=EVAL_FREQ,
             n_eval_eps=N_EVAL_EPISODES,
             checkpoint_freq=CHECKPOINT_FREQ,
-            train_phase=SEL_TRAIN_PHASE,
             num_envs=num_envs,
             action_space=action_space,
             current_tasks=current_tasks
@@ -347,11 +328,11 @@ if __name__ == "__main__":
 
     try:
         model.learn(
-            total_timesteps=total_timesteps,
+            total_timesteps=TOTAL_TIMESTEPS,
             callback=callbacks,
             log_interval=10,
             progress_bar=True,
-            reset_num_timesteps=not CONTINUE_TRAINING
+            reset_num_timesteps=False
         )
     except KeyboardInterrupt:
         printer.print_warning("Training interrupted by user")
@@ -367,15 +348,15 @@ if __name__ == "__main__":
 
     try:
         # Save model and replay buffer
-        model.save(paths_dict["end"]["model"])
+        model.save(paths_dict["model"])
 
         if hasattr(model, 'save_replay_buffer'):
-            model.save_replay_buffer(paths_dict["end"]["buffer"])
+            model.save_replay_buffer(paths_dict["buffer"])
             if DEBUG:
-                print(f"✓ Replay buffer saved to: {paths_dict['end']['buffer']}")
+                print(f"✓ Replay buffer saved to: {paths_dict['buffer']}")
 
         if DEBUG:
-            print(f"✓ Model saved to: {paths_dict['end']['model']}.zip")
+            print(f"✓ Model saved to: {paths_dict['model']}.zip")
 
         # Save transfer checkpoint for future use
         transfer_checkpoint_path = transfer_manager.save_transfer_checkpoint(
@@ -389,7 +370,7 @@ if __name__ == "__main__":
             printer.print_training_finished(
                 task_name=EXPERIMENT,
                 algorithm=ALGORITHM,
-                final_model_path=f"{paths_dict['end']['model']}.zip",
+                final_model_path=f"{paths_dict['model']}.zip",
                 best_model_path=f"./metaworld_models/best_{EXPERIMENT}/best_model.zip",
                 checkpoint_path=f"./metaworld_models/checkpoints_{EXPERIMENT}/",
                 transfer_checkpoint_path=transfer_checkpoint_path

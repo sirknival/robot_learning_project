@@ -9,28 +9,26 @@ class OneHotTaskWrapper(VecEnv):
     Erweitert die Observation um eine One-Hot-Kodierung des aktuellen Tasks.
     """
 
-    def __init__(self, venv: VecEnv, task_names):
+    def __init__(self, venv: VecEnv, task_names, one_hot_dim=None):
         self.venv = venv
         self.task_names = task_names
-        self.n_tasks = len(task_names)
+
+        if one_hot_dim is not None:
+            self.n_tasks = one_hot_dim
+        else:
+            self.n_tasks = len(task_names)
 
         self.num_envs = venv.num_envs
         self.action_space = venv.action_space
 
-        # Original Observation Space
         orig_space = venv.observation_space
         assert isinstance(orig_space, spaces.Box)
 
+        # Space erweitern
         low = np.concatenate([orig_space.low, np.zeros(self.n_tasks)]).astype(np.float32)
         high = np.concatenate([orig_space.high, np.ones(self.n_tasks)]).astype(np.float32)
 
-        self.observation_space = spaces.Box(
-                low=low,
-                high=high,
-                dtype=np.float32,
-            )
-
-        # pro Env merken wir uns die Task-ID
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
         self._task_ids = np.zeros(self.num_envs, dtype=int)
 
     def reset(self):
@@ -104,19 +102,12 @@ class OneHotTaskWrapper(VecEnv):
 
     def _augment_obs(self, obs):
         """Fügt One-Hot Task Encoding hinzu"""
-        # Debug: Prüfe obs Shape
-        # print(f"DEBUG _augment_obs:")
-        # print(f"  obs type: {type(obs)}")
-        # print(f"  obs shape: {obs.shape if isinstance(obs, np.ndarray) else 'not ndarray'}")
-        #if isinstance(obs, np.ndarray):
-        #    print(f"  obs[0] shape: {obs[0].shape if len(obs) > 0 else 'empty'}")
 
         one_hot = np.zeros((self.num_envs, self.n_tasks), dtype=np.float32)
-        one_hot[np.arange(self.num_envs), self._task_ids] = 1.0
+        safe_ids = np.clip(self._task_ids, 0, self.n_tasks - 1)
 
-        result = np.concatenate([obs, one_hot], axis=1)
-        #print(f"  result shape: {result.shape}")
-        return result
+        one_hot[np.arange(self.num_envs), safe_ids] = 1.0
+        return np.concatenate([obs, one_hot], axis=1)
 
     def env_is_wrapped(self, wrapper_class, indices=None):
         return self.venv.env_is_wrapped(wrapper_class, indices)
