@@ -61,5 +61,3 @@ class TransferLearningManager:
         })
 
         print(f"[Transfer Learning] Saved checkpoint: {checkpoint_name}")
-
-

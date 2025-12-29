@@ -272,7 +272,7 @@ class MetaWorldEnvFactory:
     ) -> GymnasiumVecEnvAdapter:
         """
         Erstelle Umgebung für spezifische Curriculum Stage
-        Automatische Auswahl zwischen MT1, MT3, MT10 oder custom basierend auf Task-Anzahl
+        automatische Auswahl zwischen MT1, MT3, MT10 oder custom basierend auf Task-Anzahl
 
         Args:
             stage_tasks: Liste der Tasks für diese Stage

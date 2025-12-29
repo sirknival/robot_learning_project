@@ -39,24 +39,25 @@ if __name__ == "__main__":
     # ==================== CONFIGURATION ====================
 
     # -------------------- Training Strategy --------------------
-    TRAINING_MODE = "SEQUENTIAL"  # Options: "SEQUENTIAL", "PROGRESSIVE", "MIXED"
-    USE_TRANSFER_LEARNING = True  # Use pretrained model as starting point
-    USE_CURRICULUM = True          # Enable curriculum learning with automatic stage transitions
-    PRETRAINED_MODEL_PATH = './metaworld_models/MT10k_SAC_5M'   # Path to pretrained model (e.g., "<./metaworld_models/MT10_SAC_5M.zip")
-    USE_SUBPROC_VEC_ENV = True     # Use SubprocVecEnv (True) for faster multi-processing or DummyVecEnv (False)
+    TRAINING_MODE = "SEQUENTIAL"    # Options: "SEQUENTIAL", "PROGRESSIVE", "MIXED"
+    USE_TRANSFER_LEARNING = False    # Use pretrained model as starting point
+    USE_CURRICULUM = True           # Enable curriculum learning with automatic stage transitions
+    PRETRAINED_MODEL_PATH = None    # None path in case of initial training
+    # PRETRAINED_MODEL_PATH = './metaworld_models/MT10k_SAC_5M'   # Path to pretrained model without .zip
+    USE_SUBPROC_VEC_ENV = True      # Use SubprocVecEnv (True) for faster multi-processing or DummyVecEnv (False)
 
     # -------------------- Experiment Setup --------------------
-    EXPERIMENT = "MT10"             # Options: "MT1", "MT3", "MT10", "MT10_CURRICULUM"
+    EXPERIMENT = "MT10_CURRICULUM"  # Options: "MT1", "MT3", "MT10", "MT10_CURRICULUM"
     TASK_NAME = "reach-v3"          # Required for MT1 (e.g., "reach-v3", "push-v3")
-    ALGORITHM = "SAC"               # Options: "SAC", "TD3", "DDPG" (SAC recommended)
+    ALGORITHM = "SAC"               # Options: "SAC", "TD3", "DDPG" (SAC standard)
     SEED = 42                       # Random seed for reproducibility
     N_PARALLEL_ENVS = 1             # Number of parallel environments (1-10, higher = faster training)
-    MAX_TASKS_IN_PROJECT = 10       # Für MT10 Projekt; Do not touch!
+    MAX_TASKS = len(MT10_TASKS)     # MT10 Project; Do not change
     TOTAL_TIMESTEPS = 5 * 1e4       # Number of total time-steps while training
 
     # -------------------- Curriculum Settings --------------------
-    CURRICULUM_STAGE = 1           # Starting curriculum stage (0 = easiest tasks)
-    MIN_STEPS_PER_STAGE = 2000 # 200000   # Minimum training steps before stage transition
+    CURRICULUM_STAGE = 0           # Starting curriculum stage (0 = easiest tasks)
+    MIN_STEPS_PER_STAGE = 2000  # 200000   # Minimum training steps before stage transition
     STAGE_EVAL_FREQ = 1000        # Evaluate performance every N steps for stage transitions
 
     # -------------------- Environment Settings --------------------
@@ -75,7 +76,7 @@ if __name__ == "__main__":
 
     # -------------------- Setup Paths --------------------
     MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}"
-    # ToDo remove hardcoding 1e4, dev Pur
+    # ToDo remove hard-coding 1e4, dev Pur
     paths_dict = {
             "model": f"./metaworld_models/{MODEL_BASENAME}_{TOTAL_TIMESTEPS / 1e4}M",
             "buffer": f"./metaworld_models/{MODEL_BASENAME}_{TOTAL_TIMESTEPS / 1e4}M_replay.pkl"
@@ -190,7 +191,8 @@ if __name__ == "__main__":
                     print(f"  {i}. {task} (difficulty: {difficulty})")
 
     else:
-        raise ValueError(f"Unknown EXPERIMENT type: {EXPERIMENT}. Choose from 'MT1', 'MT3', 'MT10', or include 'CURRICULUM' in name")
+        raise ValueError(f"Unknown EXPERIMENT type: {EXPERIMENT}. "
+                         f"Choose from 'MT1', 'MT3', 'MT10', or include 'CURRICULUM' in name")
 
     # -------------------- Create Environments --------------------
 
@@ -207,8 +209,8 @@ if __name__ == "__main__":
     )
 
     # Apply one-hot task encoding wrapper
-    train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS_IN_PROJECT)
-    eval_env = OneHotTaskWrapper(eval_env, current_tasks, MAX_TASKS_IN_PROJECT)
+    train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS)
+    eval_env = OneHotTaskWrapper(eval_env, current_tasks, MAX_TASKS)
 
     num_envs = getattr(train_env, "num_envs", 1)
 
@@ -248,17 +250,20 @@ if __name__ == "__main__":
             # Fallback to new model if loading failed
             printer.print_warning("Failed to load pretrained model, creating new model instead")
             USE_TRANSFER_LEARNING = False
+            model = False
 
     if not USE_TRANSFER_LEARNING or not model:
         # Create new model from scratch
         if ALGORITHM == "SAC":
             model = model_factory_SAC(train_env, ALGORITHM, SEED)
         elif ALGORITHM == "TD3":
-            action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") else train_env.action_space
+            action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") \
+                else train_env.action_space
             n_actions = action_space.shape[0]
             model = model_factory_TD3(n_actions, train_env, ALGORITHM, SEED)
         elif ALGORITHM == "DDPG":
-            action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") else train_env.action_space
+            action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") \
+                else train_env.action_space
             n_actions = action_space.shape[0]
             model = model_factory_DDPG(n_actions, train_env, ALGORITHM, SEED)
         else:
@@ -306,13 +311,14 @@ if __name__ == "__main__":
     # -------------------- Print Training Configuration --------------------
 
     if DEBUG:
-        action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") else train_env.action_space
+        action_space = train_env.single_action_space if hasattr(train_env, "single_action_space") \
+            else train_env.action_space
 
         printer.print_training_start(
             model=model,
             task_name=EXPERIMENT,
             algorithm=ALGORITHM,
-            time_steps=TOTAL_TIMESTEPS,
+            time_steps=int(TOTAL_TIMESTEPS),
             seed=SEED,
             max_eps_steps=MAX_EPISODE_STEPS,
             norm_reward=NORMALIZE_REWARD,
@@ -383,11 +389,11 @@ if __name__ == "__main__":
 
             print("\n" + "=" * 70)
             print("NEXT CURRICULUM STAGE")
-            print(f"To continue training with the next stage:")
+            print(f"To continue training with the next stage: ")
             print(f"  1. Set CURRICULUM_STAGE = {next_stage}")
             print(f"  2. Set USE_TRANSFER_LEARNING = True")
             print(f"  3. Set PRETRAINED_MODEL_PATH = '{transfer_checkpoint_path}.zip'")
-            print(f"\nNext stage will include {len(next_tasks)} tasks:")
+            print(f"\nNext stage will include {len(next_tasks)} tasks: ")
             for task in next_tasks:
                 print(f"  • {task}")
             print("=" * 70)
@@ -401,6 +407,8 @@ if __name__ == "__main__":
     train_env.close()
     eval_env.close()
 
+    # -------------------- Evaluation --------------------
+
     final_evaluator = MetaWorldEvaluator(
         task_list=current_tasks,
         max_episode_steps=200
@@ -411,10 +419,10 @@ if __name__ == "__main__":
         num_episodes_per_task=20  # Mehr Episoden für Genauigkeit
     )
 
-    print(f"Gesamt Success Rate: {success_rate * 100:.2f}%")
+    print(f"Gesamt Success Rate: {success_rate * 100: .2f}%")
     # Details anzeigen, wenn gewünscht
     for task, stats in details.items():
-         print(f"{task}: {stats['success']*100}%")
+        print(f"{task}: {stats['success']*100}%")
 
     if DEBUG:
         printer.print_success("Training completed successfully!")

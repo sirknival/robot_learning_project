@@ -92,7 +92,7 @@ class MetaWorldEvaluator:
             all_rewards.extend(task_rewards)
             all_successes.extend(task_successes)
 
-            print(f"  -> {task_name:20s}: Reward={mean_r:8.2f}, Success={mean_s * 100:5.1f}%")
+            print(f" -> {task_name: 20s}: Reward={mean_r: 8.2f}, Success={mean_s * 100: 5.1f}%")
 
         overall_mean_reward = np.mean(all_rewards)
         overall_success_rate = np.mean(all_successes)

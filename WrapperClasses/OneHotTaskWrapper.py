@@ -10,6 +10,7 @@ class OneHotTaskWrapper(VecEnv):
     """
 
     def __init__(self, venv: VecEnv, task_names, one_hot_dim=None):
+        super().__init__()
         self.venv = venv
         self.task_names = task_names
 
@@ -60,7 +61,7 @@ class OneHotTaskWrapper(VecEnv):
         if task_name:
             return task_name
 
-        # Versuch 2: Aus dem Environment selbst
+        # Versuch 2: aus dem Environment selbst
         try:
             if hasattr(self.venv, 'envs'):
                 env = self.venv.envs[env_idx]
@@ -71,7 +72,7 @@ class OneHotTaskWrapper(VecEnv):
         except:
             pass
 
-        # Versuch 3: Aus gym_vec_env (bei GymnasiumVecEnvAdapter)
+        # Versuch 3: aus gym_vec_env (bei GymnasiumVecEnvAdapter)
         try:
             if hasattr(self.venv, 'gym_vec_env'):
                 gym_env = self.venv.gym_vec_env
@@ -83,6 +84,7 @@ class OneHotTaskWrapper(VecEnv):
             pass
 
         return None
+
     def step_async(self, actions):
         self.venv.step_async(actions)
 
@@ -120,8 +122,10 @@ class OneHotTaskWrapper(VecEnv):
 
     def set_attr(self, name, values, indices=None):
         return self.venv.set_attr(name, values, indices=indices)
+
     def get_images(self):
         return self.venv.get_images()
 
     def seed(self, seed=None):
         return self.venv.seed(seed)
+

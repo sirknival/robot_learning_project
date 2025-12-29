@@ -140,7 +140,7 @@ class GymnasiumVecEnvAdapter(VecEnv):
                     for i in range(self.num_envs):
                         list_infos[i][k] = v[i]
                 else:
-                    # Fall 2: Skalar oder "globaler" Wert -> für alle Envs gleich setzen
+                    # Fall 2: Skalar oder "globaler" Wert → für alle Envs gleich setzen
                     for i in range(self.num_envs):
                         list_infos[i][k] = v.item() if v.ndim == 0 else v
 

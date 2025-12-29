@@ -1,8 +1,7 @@
 from stable_baselines3.common.noise import NormalActionNoise
-from stable_baselines3 import SAC, TD3, DDPG, PPO
+from stable_baselines3 import SAC, TD3, DDPG
 import numpy as np
 import torch
-import os
 
 
 def model_factory_TD3(n_actions, env, algorithm: str, seed: int):
@@ -39,7 +38,7 @@ def model_factory_TD3(n_actions, env, algorithm: str, seed: int):
     return model
 
 
-def model_factory_DDPG(n_actions, env, algorithm: str, seed : int ):
+def model_factory_DDPG(n_actions, env, algorithm: str, seed: int):
     # DDPG - Recommended for Meta-World (better exploration)
     action_noise = NormalActionNoise(
         mean=np.zeros(n_actions),
@@ -97,4 +96,3 @@ def model_factory_SAC(env, algorithm: str, seed: int):
     )
 
     return model
-

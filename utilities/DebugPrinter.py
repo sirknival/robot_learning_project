@@ -20,7 +20,7 @@ class DebugPrinter:
         self.mini_separator = "-" * line_width
 
     def _print(self, *args, **kwargs):
-        """Internes Print mit verbose Check"""
+        """Internal print routine with verbose check"""
         if self.verbose:
             print(*args, **kwargs)
 
@@ -50,7 +50,6 @@ class DebugPrinter:
         Args:
             experiment: Name des Experiments (z.B. "MT10", "MT10_CURRICULUM")
             algorithm: Verwendeter Algorithmus (SAC, TD3, DDPG)
-            train_mode: True = Continue Training, False = New Training
             training_mode: Optional - "SEQUENTIAL", "PROGRESSIVE", "MIXED"
             use_transfer: Ob Transfer Learning verwendet wird
             use_curriculum: Ob Curriculum Learning verwendet wird
@@ -91,13 +90,13 @@ class DebugPrinter:
         self.print_section("CURRICULUM LEARNING CONFIGURATION")
 
         self._print(f"Current Stage: {stage + 1}/{total_stages}")
-        self._print(f"Tasks in this stage ({len(tasks)}):")
+        self._print(f"Tasks in this stage ({len(tasks)}): ")
         for i, task in enumerate(tasks, 1):
             self._print(f"  {i}. {task}")
 
         if stage_thresholds and stage < total_stages - 1:
             next_threshold = stage_thresholds.get(stage + 1, 0.5)
-            self._print(f"\nThreshold for next stage: {next_threshold:.1%} success rate")
+            self._print(f"\nThreshold for next stage: {next_threshold: .1%} success rate")
 
     def print_transfer_info(
             self,
@@ -112,7 +111,7 @@ class DebugPrinter:
         Args:
             pretrained_model: Pfad zum vortrainierten Modell
             source_tasks: Tasks auf denen vortrainiert wurde
-            target_tasks: Neue Tasks für Transfer
+            target_tasks: neue Tasks für Transfer
             lr_multiplier: Learning Rate Multiplikator fürs Fine-Tuning
         """
         self.print_section("TRANSFER LEARNING CONFIGURATION")
@@ -122,12 +121,12 @@ class DebugPrinter:
             self._print(f"Fine-Tuning LR Multiplier: {lr_multiplier}")
 
             if source_tasks:
-                self._print(f"\nSource Tasks ({len(source_tasks)}):")
+                self._print(f"\nSource Tasks ({len(source_tasks)}): ")
                 for task in source_tasks:
                     self._print(f"  • {task}")
 
             if target_tasks:
-                self._print(f"\nTarget Tasks ({len(target_tasks)}):")
+                self._print(f"\nTarget Tasks ({len(target_tasks)}): ")
                 for task in target_tasks:
                     self._print(f"  • {task}")
         else:
@@ -163,7 +162,6 @@ class DebugPrinter:
             eval_freq: Evaluations-Frequenz
             n_eval_eps: Anzahl Evaluations-Episoden
             checkpoint_freq: Checkpoint-Frequenz
-            train_phase: Training Phase Nummer
             num_envs: Anzahl paralleler Umgebungen
             action_space: Action Space des Environments
             current_tasks: Optional - Liste aktueller Tasks
@@ -172,14 +170,14 @@ class DebugPrinter:
 
         # Basic Configuration
         self._print("Basic Configuration:")
-        self._print(f"  Total Timesteps: {time_steps:,}")
+        self._print(f"  Total time-steps: {time_steps}")
         self._print(f"  Seed: {seed}")
         self._print(f"  Algorithm: {algorithm}")
         self._print(f"  Parallel Environments: {num_envs}")
 
         # Task Information
         if current_tasks and len(current_tasks) > 1:
-            self._print(f"\nMulti-Task Setup ({len(current_tasks)} tasks):")
+            self._print(f"\nMulti-Task Setup ({len(current_tasks)} tasks): ")
             for task in current_tasks:
                 self._print(f"  • {task}")
         else:
@@ -191,18 +189,18 @@ class DebugPrinter:
         if hasattr(model, 'learning_rate'):
             lr = model.learning_rate
             if callable(lr):
-                self._print(f"  Learning Rate: {lr(1):.2e} (initial)")
+                self._print(f"  Learning Rate: {lr(1): .2e} (initial)")
             else:
-                self._print(f"  Learning Rate: {lr:.2e}")
+                self._print(f"  Learning Rate: {lr: .2e}")
 
         if hasattr(model, 'learning_starts'):
-            self._print(f"  Learning Starts: {model.learning_starts:,}")
+            self._print(f"  Learning Starts: {model.learning_starts}")
 
         if hasattr(model, 'batch_size'):
             self._print(f"  Batch Size: {model.batch_size}")
 
         if hasattr(model, 'buffer_size'):
-            self._print(f"  Buffer Size: {model.buffer_size:,}")
+            self._print(f"  Buffer Size: {model.buffer_size}")
 
         if hasattr(model, 'gamma'):
             self._print(f"  Gamma (Discount): {model.gamma}")
@@ -220,12 +218,12 @@ class DebugPrinter:
 
         # Algorithm-Specific
         if algorithm == "SAC":
-            self._print(f"\nSAC-Specific:")
+            self._print(f"\nSAC-Specific: ")
             self._print(f"  Entropy Tuning: Automatic")
             self._print(f"  Target Entropy: {-action_space.shape[0]}")
 
         elif algorithm == "TD3":
-            self._print(f"\nTD3-Specific:")
+            self._print(f"\nTD3-Specific: ")
             if hasattr(model, 'policy_kwargs'):
                 self._print(f"  Exploration Noise: σ=0.1")
                 self._print(f"  Target Policy Noise: 0.1 (clip: 0.3)")
@@ -238,9 +236,9 @@ class DebugPrinter:
 
         # Evaluation & Checkpointing
         self._print("\nEvaluation & Checkpointing:")
-        self._print(f"  Eval Frequency: {eval_freq:,} steps")
+        self._print(f"  Eval Frequency: {eval_freq} steps")
         self._print(f"  Eval Episodes: {n_eval_eps}")
-        self._print(f"  Checkpoint Frequency: {checkpoint_freq:,} steps")
+        self._print(f"  Checkpoint Frequency: {checkpoint_freq} steps")
 
         self._print(self.separator)
 
@@ -313,17 +311,17 @@ class DebugPrinter:
         """
         self.print_header(f"CURRICULUM STAGE TRANSITION: {old_stage + 1} → {new_stage + 1}", use_mini=True)
 
-        self._print(f"Performance achieved: {performance:.1%}")
+        self._print(f"Performance achieved: {performance: .1%}")
 
-        self._print(f"\nOld Tasks ({len(old_tasks)}):")
+        self._print(f"\nOld Tasks ({len(old_tasks)}): ")
         for task in old_tasks:
             self._print(f"  ✓ {task}")
 
         new_added = [t for t in new_tasks if t not in old_tasks]
         if new_added:
-            self._print(f"\nNewly Added Tasks ({len(new_added)}):")
+            self._print(f"\nNewly Added Tasks ({len(new_added)}): ")
             for task in new_added:
-                self._print(f"  + {task}")
+                self._print(f" + {task}")
 
         self._print(self.mini_separator)
 
@@ -345,8 +343,8 @@ class DebugPrinter:
         if hasattr(model, 'policy'):
             total_params = sum(p.numel() for p in model.policy.parameters())
             trainable_params = sum(p.numel() for p in model.policy.parameters() if p.requires_grad)
-            self._print(f"Total Parameters: {total_params:,}")
-            self._print(f"Trainable Parameters: {trainable_params:,}")
+            self._print(f"Total Parameters: {total_params}")
+            self._print(f"Trainable Parameters: {trainable_params}")
 
     def print_error(self, error_msg: str, exception: Optional[Exception] = None):
         """Druckt Fehler-Informationen"""
@@ -366,7 +364,7 @@ class DebugPrinter:
 
 
 # Convenience functions für Backward Compatibility
-def print_start_setup(experiment: str, algorithm: str, train_mode: bool):
+def print_start_setup(experiment: str, algorithm: str, train_mode: str):
     """Backward compatibility wrapper"""
     printer = DebugPrinter()
     printer.print_start_setup(experiment, algorithm, train_mode)
