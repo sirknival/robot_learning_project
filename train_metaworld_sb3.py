@@ -53,7 +53,7 @@ if __name__ == "__main__":
     SEED = 42                       # Random seed for reproducibility
     N_PARALLEL_ENVS = 1             # Number of parallel environments (1-10, higher = faster training)
     MAX_TASKS = len(MT10_TASKS)     # MT10 Project; Do not change
-    TOTAL_TIMESTEPS = 6 * 1e4       # Number of total time-steps while training
+    TOTAL_TIMESTEPS = 5 * 1e6       # Number of total time-steps while training
 
     # -------------------- Curriculum Settings --------------------
     CURRICULUM_STAGE = 0           # Starting curriculum stage (0 = easiest tasks)
@@ -218,8 +218,8 @@ if __name__ == "__main__":
         if DEBUG:
             print(f"✓ Train environment created: {type(train_env).__name__}")
             print(f"✓ Eval environment created: {type(eval_env).__name__}")
-            # print(f"  Train env observation space: {train_env.observation_space}")
-            # print(f"  Train env action space: {train_env.action_space}")
+            #print(f"  Train env observation space: {train_env.observation_space}")
+            #print(f"  Train env action space: {train_env.action_space}")
 
         # Apply one-hot task encoding wrapper
         train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
         if DEBUG:
             print(f"✓ OneHotTaskWrapper applied")
-            # print(f"  New observation space: {train_env.observation_space}")
+            #print(f"  New observation space: {train_env.observation_space}")
 
         num_envs = getattr(train_env, "num_envs", 1)
 
