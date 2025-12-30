@@ -6,3 +6,6 @@ metaworld_models/
 
 # ignore cache folder
 __pycache__/
+
+#ignore results folder
+evaluation_results/

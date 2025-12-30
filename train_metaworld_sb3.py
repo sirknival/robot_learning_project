@@ -29,7 +29,6 @@ from training_setup_multitask.utilities.DebugPrinter import DebugPrinter
 from training_setup_multitask.utilities.CurriculumConfig import CurriculumConfig
 from training_setup_multitask.utilities.TransferLearningManager import TransferLearningManager
 from training_setup_multitask.utilities.MetaWorldEnvFactory import MetaWorldEnvFactory
-from training_setup_multitask.utilities.MetaWorldEvaluator import MetaWorldEvaluator
 from training_setup_multitask.utilities.algorithms import model_factory_SAC, model_factory_TD3, model_factory_DDPG
 from training_setup_multitask.utilities.TaskEvaluator import TaskEvaluator, FinalModelEvaluator
 

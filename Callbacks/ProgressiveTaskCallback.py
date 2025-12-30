@@ -1,6 +1,5 @@
 from stable_baselines3.common.callbacks import BaseCallback
 from typing import List, Dict
-from training_setup_multitask.utilities.MetaWorldEvaluator import MetaWorldEvaluator
 
 
 class ProgressiveTaskCallback(BaseCallback):
