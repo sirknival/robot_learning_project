@@ -83,7 +83,7 @@ class ProgressiveTaskCallback(BaseCallback):
                 performance = self._evaluate_current_stage()
                 self.stage_performances.append(performance)
 
-                if self.verbose > 1:
+                if self.verbose > 0:
                     print(f"\n[Step {self.n_calls}] Current Performance: {performance:.1%}")
 
                 # Check if should advance to next stage
@@ -152,7 +152,7 @@ class ProgressiveTaskCallback(BaseCallback):
         # Check if performance meets threshold
         should_advance = performance >= threshold
 
-        if self.verbose > 1:
+        if self.verbose > 0:
             print(f"  Threshold for Stage {next_stage + 1}: {threshold:.1%}")
             print(f"  Should advance: {should_advance}")
 

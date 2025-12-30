@@ -42,13 +42,13 @@ if __name__ == "__main__":
     # -------------------- Training Strategy --------------------
     TRAINING_MODE = "PROGRESSIVE"    # Options: "SEQUENTIAL", "PROGRESSIVE", "MIXED"
     USE_TRANSFER_LEARNING = False    # Use pretrained model as starting point
-    USE_CURRICULUM = False           # Enable curriculum learning with automatic stage transitions
+    USE_CURRICULUM = True           # Enable curriculum learning with automatic stage transitions
     PRETRAINED_MODEL_PATH = None    # None path in case of initial training
     # PRETRAINED_MODEL_PATH = './metaworld_models/MT10k_SAC_5M'   # Path to pretrained model without .zip
     USE_SUBPROC_VEC_ENV = True      # Use SubprocVecEnv (True) for faster multi-processing or DummyVecEnv (False)
 
     # -------------------- Experiment Setup --------------------
-    EXPERIMENT = "MT10"  # Options: "MT1", "MT3", "MT10", "MT10_CURRICULUM"
+    EXPERIMENT = "MT10_CURRICULUM"  # Options: "MT1", "MT3", "MT10", "MT10_CURRICULUM"
     TASK_NAME = "reach-v3"          # Required for MT1 (e.g., "reach-v3", "push-v3")
     ALGORITHM = "SAC"               # Options: "SAC", "TD3", "DDPG" (SAC standard)
     SEED = 42                       # Random seed for reproducibility
@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     # -------------------- Curriculum Settings --------------------
     CURRICULUM_STAGE = 2           # Starting curriculum stage (0 = easiest tasks)
-    MIN_STEPS_PER_STAGE = 2000  # 200000   # Minimum training steps before stage transition
-    STAGE_EVAL_FREQ = 1000        # Evaluate performance every N steps for stage transitions
+    MIN_STEPS_PER_STAGE = 200  # 200000   # Minimum training steps before stage transition
+    STAGE_EVAL_FREQ = 100        # Evaluate performance every N steps for stage transitions
 
     # ----------------- Transfer Learning Settings -----------------
     LEARN_RATE_MULTIPLIER = 0.3     # Reduces learning rate by factor to avoid forgetting
@@ -70,10 +70,10 @@ if __name__ == "__main__":
 
     # -------------------- Evaluation & Checkpointing --------------------
     EVAL_FREQ = 1000              # Evaluate model every N steps
-    N_EVAL_EPISODES = 20           # Number of episodes for evaluation
+    N_EVAL_EPISODES = 1           # Number of episodes for evaluation
     CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
     RUN_FINAL_EVAL = True
-    FINAL_EVAL_EPISODES = 100
+    FINAL_EVAL_EPISODES = 1
 
     # -------------------- Debug Settings --------------------
     DEBUG = True                   # Enable verbose debug output
@@ -511,10 +511,6 @@ if __name__ == "__main__":
 
         except Exception as e:
             printer.print_error("Final evaluation failed", exception=e)
-            if DEBUG:
-                import traceback
-
-                traceback.print_exc()
 
     # -------------------- Cleanup --------------------
     train_env.close()
