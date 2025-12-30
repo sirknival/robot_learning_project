@@ -10,7 +10,7 @@ class OneHotTaskWrapper(VecEnv):
     """
 
     def __init__(self, venv: VecEnv, task_names, one_hot_dim=None):
-        super().__init__()
+        # super().__init__()
         self.venv = venv
         self.task_names = task_names
 
@@ -51,6 +51,7 @@ class OneHotTaskWrapper(VecEnv):
             task_name = self._extract_task_name(i, infos[i])
             if task_name and task_name in self.task_names:
                 self._task_ids[i] = self.task_names.index(task_name)
+
 
         return self._augment_obs(obs)
 

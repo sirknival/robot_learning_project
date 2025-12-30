@@ -5,7 +5,7 @@ from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTask
 
 
 class MetaWorldEvaluator:
-    def __init__(self, task_list, max_episode_steps=200, seed=42):
+    def __init__(self, task_list, max_episode_steps=200, seed=42, one_hot_dim=None):
         """
         Evaluator, der den existierenden OneHotTaskWrapper (VecEnv) nutzt.
 
@@ -14,6 +14,7 @@ class MetaWorldEvaluator:
         self.task_list = task_list
         self.max_episode_steps = max_episode_steps
         self.seed = seed
+        self.one_hot_dim = one_hot_dim
 
     def _make_env_fn(self, task_name):
         """
@@ -51,13 +52,10 @@ class MetaWorldEvaluator:
             task_successes = []
 
             base_venv = DummyVecEnv([self._make_env_fn(task_name)])
-
-            # ToDO do not hardcode number of different tasks
-            eval_env = OneHotTaskWrapper(base_venv, self.task_list, 10)
+            eval_env = OneHotTaskWrapper(base_venv, self.task_list, self.one_hot_dim)
 
             # Loop über Episoden
             for i in range(num_episodes_per_task):
-                # Reset (Dein Wrapper kümmert sich um die Obs-Erweiterung)
                 obs = eval_env.reset()
 
                 done = False
@@ -65,10 +63,8 @@ class MetaWorldEvaluator:
                 is_success = False
 
                 while not done:
-                    # Modell vorhersage
                     action, _ = model.predict(obs, deterministic=deterministic)
 
-                    # Step (Dein Wrapper kümmert sich um Obs-Erweiterung)
                     obs, rewards, dones, infos = eval_env.step(action)
 
                     total_reward += float(rewards[0])
@@ -92,7 +88,7 @@ class MetaWorldEvaluator:
             all_rewards.extend(task_rewards)
             all_successes.extend(task_successes)
 
-            print(f" -> {task_name: 20s}: Reward={mean_r: 8.2f}, Success={mean_s * 100: 5.1f}%")
+            print(f" -> {task_name:20s}: Reward={mean_r: 8.2f}, Success={mean_s * 100: 5.1f}%")
 
         overall_mean_reward = np.mean(all_rewards)
         overall_success_rate = np.mean(all_successes)
