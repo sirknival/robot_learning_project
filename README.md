@@ -44,7 +44,11 @@ Training framework for Meta-World robotic manipulation tasks. It supports:
 ```bash
 # Clone the repository
 git clone https://github.com/sirknival/robot_learning_project.git
-cd meta-world-training
+
+# Refactor project structure
+# Git repo features different code structure than needed for deployment
+mv robot_learning_project training_setup_multitask
+mv training_setup_multitask/train_metaworld_sb3.py train_metaworld_sb3.py
 
 # Install dependencies
 pip install stable-baselines3[extra]
@@ -52,8 +56,9 @@ pip install gymnasium
 pip install metaworld
 pip install tensorboard
 
-# Install project
-pip install -e .
+#run code
+python3 train_metaworld_sb3.py
+
 ```
 
 ---
@@ -591,17 +596,20 @@ meta-world-training/
 │   │   ├── CurriculumConfig.py          # Curriculum configuration
 │   │   ├── TransferLearningManager.py   # Transfer learning
 │   │   ├── MetaworldTasks.py            # Task definitions
+│   │   ├── TaskEvaluator.py             # Model evalutaion
 │   │   └── algorithms.py                # Model factories
 │   ├── WrapperClasses/
 │   │   ├── OneHotTaskWrapper.py         # Task encoding wrapper
 │   │   └── GymnasiumVecEnvAdapter.py    # Gymnasium adapter
 │   └── Callbacks/
+│       ├── ReplayBufferCheckpointCallback.py   # Legacy Code
 │       └── ProgressiveTaskCallback.py   # Curriculum callback
-├── metaworld_models/                     # Saved models
+├── metaworld_models/                    # Saved models
 │   ├── checkpoints_*/                   # Training checkpoints
 │   ├── best_*/                          # Best models
 │   └── transfer_checkpoints/            # Transfer learning checkpoints
-└── metaworld_logs/                       # TensorBoard logs
+├── evaluation_results/                  # Stores final assements
+└── metaworld_logs/                      # TensorBoard logs
 ```
 
 ---

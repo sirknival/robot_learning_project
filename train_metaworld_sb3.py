@@ -53,12 +53,12 @@ if __name__ == "__main__":
     SEED = 42                       # Random seed for reproducibility
     N_PARALLEL_ENVS = 1             # Number of parallel environments (1-10, higher = faster training)
     MAX_TASKS = len(MT10_TASKS)     # MT10 Project; Do not change
-    TOTAL_TIMESTEPS = 5 * 1e4       # Number of total time-steps while training
+    TOTAL_TIMESTEPS = 6 * 1e4       # Number of total time-steps while training
 
     # -------------------- Curriculum Settings --------------------
-    CURRICULUM_STAGE = 2           # Starting curriculum stage (0 = easiest tasks)
-    MIN_STEPS_PER_STAGE = 200  # 200000   # Minimum training steps before stage transition
-    STAGE_EVAL_FREQ = 100        # Evaluate performance every N steps for stage transitions
+    CURRICULUM_STAGE = 0           # Starting curriculum stage (0 = easiest tasks)
+    MIN_STEPS_PER_STAGE = 200000   # Minimum training steps before stage transition
+    STAGE_EVAL_FREQ = 10000        # Evaluate performance every N steps for stage transitions
 
     # ----------------- Transfer Learning Settings -----------------
     LEARN_RATE_MULTIPLIER = 0.3     # Reduces learning rate by factor to avoid forgetting
@@ -68,11 +68,11 @@ if __name__ == "__main__":
     NORMALIZE_REWARD = False       # Normalize rewards (enable if training is unstable)
 
     # -------------------- Evaluation & Checkpointing --------------------
-    EVAL_FREQ = 1000              # Evaluate model every N steps
-    N_EVAL_EPISODES = 1           # Number of episodes for evaluation
+    EVAL_FREQ = 10000              # Evaluate model every N steps
+    N_EVAL_EPISODES = 10           # Number of episodes for evaluation
     CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
     RUN_FINAL_EVAL = True
-    FINAL_EVAL_EPISODES = 1
+    FINAL_EVAL_EPISODES = 10
 
     # -------------------- Debug Settings --------------------
     DEBUG = True                   # Enable verbose debug output
@@ -80,12 +80,12 @@ if __name__ == "__main__":
     # ======================================================
 
     # -------------------- Setup Paths --------------------
-    MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}"
+    MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}_{int(TOTAL_TIMESTEPS / 1e6)}M"
     # ToDo remove hard-coding 1e4, dev Pur
 
     paths_dict = {
-            "model": f"./metaworld_models/{MODEL_BASENAME}_{5}M",
-            "buffer": f"./metaworld_models/{MODEL_BASENAME}_{5}M_replay.pkl"
+            "model": f"./metaworld_models/{MODEL_BASENAME}",
+            "buffer": f"./metaworld_models/{MODEL_BASENAME}_replay.pkl"
     }
 
     # -------------------- Create Directories --------------------
