@@ -346,6 +346,27 @@ class DebugPrinter:
             self._print(f"Total Parameters: {total_params}")
             self._print(f"Trainable Parameters: {trainable_params}")
 
+    def print_curriculum_stage(self, next_stage: int, transfer_checkpoint_path: str, next_tasks: List[str]):
+        """
+
+        Args:
+            next_stage:
+            transfer_checkpoint_path:
+            next_tasks:
+
+        Returns:
+
+        """
+        self.print_section("NEXT CURRICULUM STAGE")
+        self._print(f"To continue training with the next stage: ")
+        self._print(f"  1. Set CURRICULUM_STAGE = {next_stage}")
+        self._print(f"  2. Set USE_TRANSFER_LEARNING = True")
+        self._print(f"  3. Set PRETRAINED_MODEL_PATH = '{transfer_checkpoint_path}.zip'")
+        self._print(f"\nNext stage will include {len(next_tasks)} tasks: ")
+        for task in next_tasks:
+            self._print(f"  • {task}")
+        self._print("=" * 70)
+
     def print_error(self, error_msg: str, exception: Optional[Exception] = None):
         """Druckt Fehler-Informationen"""
         self._print(f"\n{'!' * self.line_width}")

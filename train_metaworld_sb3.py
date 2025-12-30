@@ -216,18 +216,18 @@ if __name__ == "__main__":
         )
 
         if DEBUG:
-            print(f"✓ Train environment created: {type(train_env).__name__}")
-            print(f"✓ Eval environment created: {type(eval_env).__name__}")
-            #print(f"  Train env observation space: {train_env.observation_space}")
-            #print(f"  Train env action space: {train_env.action_space}")
+            printer.print_success(f"Train environment created: {type(train_env).__name__}")
+            printer.print_success(f"Eval environment created: {type(eval_env).__name__}")
+            # print(f"  Train env observation space: {train_env.observation_space}")
+            # print(f"  Train env action space: {train_env.action_space}")
 
         # Apply one-hot task encoding wrapper
         train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS)
         eval_env = OneHotTaskWrapper(eval_env, current_tasks, MAX_TASKS)
 
         if DEBUG:
-            print(f"✓ OneHotTaskWrapper applied")
-            #print(f"  New observation space: {train_env.observation_space}")
+            printer.print_success("OneHotTaskWrapper applied")
+            # print(f"  New observation space: {train_env.observation_space}")
 
         num_envs = getattr(train_env, "num_envs", 1)
 
@@ -237,7 +237,7 @@ if __name__ == "__main__":
             # Test environment reset
             print("\nTesting environment reset...")
             obs = train_env.reset()
-            print(f"✓ Reset successful, observation shape: {obs[0].shape if isinstance(obs, tuple) else obs.shape}")
+            printer.print_success(f"Reset successful, observation shape: {obs[0].shape if isinstance(obs, tuple) else obs.shape}")
 
     except Exception as e:
         if DEBUG:
@@ -303,7 +303,7 @@ if __name__ == "__main__":
             raise RuntimeError("Failed to create or load model")
 
         if DEBUG:
-            print(f"✓ Model initialized successfully")
+            printer.print_success(f"Model initialized successfully")
             print(f"  Model type: {type(model).__name__}")
             print(f"  Policy type: {type(model.policy).__name__}")
 
@@ -357,7 +357,7 @@ if __name__ == "__main__":
         callbacks.append(curriculum_callback)
 
         if DEBUG:
-            print("\n✓ Progressive curriculum callback enabled")
+            printer.print_success(f"Progressive curriculum callback enabled")
 
     # -------------------- Print Training Configuration --------------------
 
@@ -402,8 +402,7 @@ if __name__ == "__main__":
     # -------------------- Save Final Model --------------------
 
     if DEBUG:
-        print("\n" + "=" * 70)
-        print("SAVING FINAL MODEL")
+        printer.print_header("SAVING FINAL MODEL")
 
     try:
         # Save model and replay buffer
@@ -412,10 +411,10 @@ if __name__ == "__main__":
         if hasattr(model, 'save_replay_buffer'):
             model.save_replay_buffer(paths_dict["buffer"])
             if DEBUG:
-                print(f"✓ Replay buffer saved to: {paths_dict['buffer']}")
+                printer.print_success(f"Replay buffer saved to: {paths_dict['buffer']}")
 
         if DEBUG:
-            print(f"✓ Model saved to: {paths_dict['model']}.zip")
+            printer.print_success(f"Model saved to: {paths_dict['model']}.zip")
 
         # Save transfer checkpoint for future use
         transfer_checkpoint_path = transfer_manager.save_transfer_checkpoint(
@@ -440,16 +439,7 @@ if __name__ == "__main__":
             next_stage = CURRICULUM_STAGE + 1
             next_tasks = curriculum_config.CURRICULUM_STAGES[next_stage]
 
-            print("\n" + "=" * 70)
-            print("NEXT CURRICULUM STAGE")
-            print(f"To continue training with the next stage: ")
-            print(f"  1. Set CURRICULUM_STAGE = {next_stage}")
-            print(f"  2. Set USE_TRANSFER_LEARNING = True")
-            print(f"  3. Set PRETRAINED_MODEL_PATH = '{transfer_checkpoint_path}.zip'")
-            print(f"\nNext stage will include {len(next_tasks)} tasks: ")
-            for task in next_tasks:
-                print(f"  • {task}")
-            print("=" * 70)
+            printer.print_curriculum_stage(next_stage, transfer_checkpoint_path, next_tasks)
 
     except Exception as e:
         printer.print_error("Failed to save model", exception=e)
@@ -458,30 +448,10 @@ if __name__ == "__main__":
     if DEBUG:
         printer.print_success("Training completed successfully!")
 
-
     # -------------------- Evaluation --------------------
-    """
-    final_evaluator = MetaWorldEvaluator(
-        task_list=current_tasks,
-        max_episode_steps=200
-    )
-
-    mean_reward, success_rate, details = final_evaluator.evaluate(
-        model=model,
-        num_episodes_per_task=20  # Mehr Episoden für Genauigkeit
-    )
-
-    print(f"Gesamt Success Rate: {success_rate * 100: .2f}%")
-    # Details anzeigen, wenn gewünscht
-    for task, stats in details.items():
-        print(f"{task}: {stats['success']*100}%")
-    """
-
     if RUN_FINAL_EVAL:
         if DEBUG:
-            print("\n" + "=" * 70)
-            print("RUNNING FINAL COMPREHENSIVE EVALUATION")
-            print("=" * 70 + "\n")
+            printer.print_header("RUNNING FINAL COMPREHENSIVE EVALUATION")
 
         try:
             # Create final evaluator
@@ -505,8 +475,8 @@ if __name__ == "__main__":
             )
 
             if DEBUG:
-                print("\n✓ Final evaluation completed")
-                print(f"  Results saved to: ./evaluation_results/")
+                printer.print_success(f"Final evaluation completed")
+                printer.print_success(f"Results saved to: ./evaluation_results/")
 
         except Exception as e:
             printer.print_error("Final evaluation failed", exception=e)
