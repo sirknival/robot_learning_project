@@ -292,18 +292,19 @@ class MetaWorldEnvFactory:
         elif num_tasks == 1:
             # Single task - MT1
         # ToDo find out why MT1 env does not work properly
-            """return self.make_mt1_env(
+            return self.make_mt1_env(
                 task_name=stage_tasks[0],
                 seed=seed,
                 max_episode_steps=max_episode_steps,
                 rank=rank
-            )"""
+            )
+            """
             return self.make_custom_multi_task_env(
                 tasks=stage_tasks,
                 seed=seed,
                 max_episode_steps=max_episode_steps,
                 rank=rank
-            )
+            )"""
 
         elif num_tasks == 3:
             # Three tasks - MT3

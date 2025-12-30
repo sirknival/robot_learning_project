@@ -146,6 +146,31 @@ class OneHotTaskWrapper(VecEnv):
                 if task_name and task_name in self._task_name_to_id:
                     self._task_ids[i] = self._task_name_to_id[task_name]
 
+                if "terminal_observation" in infos[i]:
+                    terminal_obs = infos[i]["terminal_observation"]
+                    expected_base_dim = self.observation_space.shape[0] - self.n_tasks
+
+                    # Check if terminal_obs needs one-hot encoding
+                    if terminal_obs.shape[-1] == expected_base_dim:
+
+                        if terminal_obs.ndim == 1:
+                            terminal_obs = terminal_obs.reshape(1, -1)
+
+                        # Create one-hot encoding for this specific environment
+                        one_hot = np.zeros((1, self.n_tasks), dtype=np.float32)
+                        task_id = np.clip(self._task_ids[i], 0, self.n_tasks - 1)
+                        one_hot[0, task_id] = 1.0
+
+                        # Concatenate base observation with one-hot encoding
+                        augmented_terminal = np.concatenate([terminal_obs, one_hot], axis=1).astype(np.float32)
+
+                        # Store back as 1D array (SB3 expects 1D terminal_observation)
+                        infos[i]["terminal_observation"] = augmented_terminal.flatten()
+
+                    elif terminal_obs.shape[-1] != self.observation_space.shape[0]:
+                        # Unexpected shape - remove to avoid errors
+                        del infos[i]["terminal_observation"]
+
         return self._augment_obs(obs), rewards, dones, infos
 
     def close(self):
