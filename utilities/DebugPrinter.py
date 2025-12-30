@@ -27,13 +27,13 @@ class DebugPrinter:
     def print_header(self, text: str, use_mini: bool = False):
         """Druckt einen formatierten Header"""
         separator = self.mini_separator if use_mini else self.separator
-        self._print(f"\n{separator}")
+        self._print(f"{separator}")
         self._print(text)
-        self._print(f"{separator}\n")
+        self._print(f"{separator}")
 
     def print_section(self, title: str):
         """Druckt einen Section-Titel"""
-        self._print(f"\n{title}")
+        self._print(f"{title}")
         self._print(self.mini_separator)
 
     def print_start_setup(
@@ -377,11 +377,11 @@ class DebugPrinter:
 
     def print_warning(self, warning_msg: str):
         """Druckt Warnung"""
-        self._print(f"\n⚠️  WARNING: {warning_msg}\n")
+        self._print(f"⚠️  WARNING: {warning_msg}\n")
 
     def print_success(self, success_msg: str):
         """Druckt Erfolgs-Nachricht"""
-        self._print(f"\n✓ {success_msg}\n")
+        self._print(f"✓ {success_msg}\n")
 
 
 # Convenience functions für Backward Compatibility
