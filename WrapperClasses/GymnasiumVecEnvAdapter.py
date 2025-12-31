@@ -41,10 +41,17 @@ class GymnasiumVecEnvAdapter(VecEnv):
 
     def env_method(self, method_name, *method_args, indices=None, **method_kwargs):
         """
-        Für unsere Nutzung nicht relevant. Falls später pro-Env-Methoden
-        gebraucht werden, kann man das noch sauber implementieren.
+        WICHTIG FÜR CURRICULUM:
+        Leitet Methodenaufrufe (wie update_active_tasks) an die Gymnasium VectorEnv weiter.
         """
-        raise NotImplementedError
+        if indices is None:
+            # Auf allen Envs ausführen
+            return self.gym_vec_env.call(method_name, *method_args, **method_kwargs)
+        else:
+            results = self.gym_vec_env.call(method_name, *method_args, **method_kwargs)
+            if isinstance(indices, int):
+                return [results[indices]]
+            return [results[i] for i in indices]
 
     def get_attr(self, name, indices=None):
         """
