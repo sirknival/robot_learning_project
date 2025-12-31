@@ -2,12 +2,25 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from stable_baselines3.common.vec_env import VecEnv
+from training_setup_multitask.utilities.MetaworldTasks import MT10_TASKS
 
 
 class OneHotTaskWrapper(VecEnv):
     """
-    Extends observations with one-hot encoding of the current task.
-    Uses fixed dimension for consistency across different task counts.
+    Wraps a VecEnv to add one-hot task encoding to observations.
+
+    This wrapper extends the observation space by concatenating a one-hot
+    encoded task ID to each observation. Uses a fixed dimension for the
+    one-hot encoding to ensure consistency across different numbers of tasks.
+
+    The wrapper properly handles terminal_observation from both DummyVecEnv
+    and GymnasiumVecEnvAdapter to ensure correct shapes for SB3.
+
+    Args:
+        venv: Vectorized environment to wrap
+        task_names: List of task names in this environment
+        one_hot_dim: Fixed dimension for one-hot encoding (default: 10 for MT10)
+
     """
 
     def __init__(self, venv: VecEnv, task_names, one_hot_dim=10):
@@ -29,7 +42,6 @@ class OneHotTaskWrapper(VecEnv):
             f"Expected Box observation space, got {type(orig_space)}"
 
         # Extend observation space with one-hot encoding
-        # Use -inf/inf for one-hot part to avoid warnings
         low = np.concatenate([
             orig_space.low,
             np.full(self.n_tasks, -np.inf, dtype=np.float32)
@@ -50,7 +62,7 @@ class OneHotTaskWrapper(VecEnv):
         self._task_ids = np.zeros(self.num_envs, dtype=int)
 
         # Create mapping from task names to IDs
-        self._task_name_to_id = {name: i for i, name in enumerate(task_names)}
+        self._task_name_to_id = {name: i for i, name in enumerate(MT10_TASKS)}
 
     def reset(self):
         """Reset environments and return augmented observations"""
@@ -82,8 +94,7 @@ class OneHotTaskWrapper(VecEnv):
 
         augmented_obs = self._augment_obs(obs)
 
-        # CRITICAL: Always return just the observations for SB3 compatibility
-        # SB3 expects reset() to return observations only (not tuple)
+        # Always return just the observations for SB3 compatibility
         return augmented_obs
 
     def _extract_task_name(self, env_idx, info):
