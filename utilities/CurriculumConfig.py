@@ -39,6 +39,30 @@ class CurriculumConfig:
         MT10_TASKS,
     ]
 
+    # Task clusters for curriculum for augmented stages, same dim needed for auto stage transition
+    CURRICULUM_STAGES_AUG = [
+        # Stage 1: Basics
+        ["reach-v3", "reach-v3", "reach-v3", "reach-v3", "reach-v3",
+         "reach-v3", "reach-v3", "reach-v3", "reach-v3", "reach-v3"],
+
+        # Stage 2: Simple manipulation
+        ["reach-v3", "push-v3", "button-press-topdown-v3", "reach-v3", "push-v3",
+         "button-press-topdown-v3", "reach-v3", "push-v3", "button-press-topdown-v3", "push-v3"],
+
+        # Stage 3: Opening/Closing
+        ["reach-v3", "push-v3", "button-press-topdown-v3",
+         "door-open-v3", "drawer-open-v3", "drawer-close-v3",
+         "door-open-v3", "drawer-open-v3", "drawer-close-v3", "drawer-close-v3"],
+
+        # Stage 4: Complex manipulation
+        ["reach-v3", "push-v3", "button-press-topdown-v3",
+         "door-open-v3", "drawer-open-v3", "drawer-close-v3",
+         "window-open-v3", "window-close-v3", "window-open-v3", "window-close-v3"],
+
+        # Stage 5: All tasks
+        MT10_TASKS,
+    ]
+
     # Performance thresholds for stage-transitions
     STAGE_THRESHOLDS = {
         1: 0.7,
