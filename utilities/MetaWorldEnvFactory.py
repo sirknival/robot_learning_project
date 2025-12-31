@@ -60,17 +60,23 @@ class MetaWorldEnvFactory:
         Returns:
             DummyVecEnv mit n_envs parallelen Environments
         """
-        from stable_baselines3.common.vec_env import DummyVecEnv
+        from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+        import metaworld
 
         if task_name not in self.MT10_TASKS:
             self._log(f"⚠️  Warning: '{task_name}' not in standard MT10 tasks")
 
+        vec_type = "SubprocVecEnv (multi-process)" if self.use_subproc else "DummyVecEnv (single-process)"
         self._log(f"Creating {n_envs} parallel MT1 environments: {task_name}")
+        self._log(f"  Vectorization: {vec_type}")
 
         # Create list of environment creation functions
-        env_fns = []
-        for i in range(n_envs):
-            def _make_env(rank=i):
+        def make_env(rank):
+            """
+            Utility function for creating environments with different seeds
+            Must be defined as a function (not lambda) for pickling in SubprocVecEnv
+            """
+            def _init():
                 env = gym.make(
                     'Meta-World/MT1',
                     env_name=task_name,
@@ -80,8 +86,10 @@ class MetaWorldEnvFactory:
                     terminate_on_success=self.terminate_on_success,
                 )
                 return env
+            return _init
 
-            env_fns.append(_make_env)
+        # Create list of environment initialization functions
+        env_fns = [make_env(i) for i in range(n_envs)]
 
         # Create vectorized environment
         vec_env = DummyVecEnv(env_fns)
@@ -120,11 +128,12 @@ class MetaWorldEnvFactory:
             )
 
         from stable_baselines3.common.vec_env import DummyVecEnv
+        import metaworld
 
         if task_name not in self.MT10_TASKS:
             self._log(f"⚠️  Warning: '{task_name}' not in standard MT10 tasks")
 
-        self._log(f"Creating MT1 environment: {task_name}")
+        self._log(f"Creating single MT1 environment: {task_name}")
 
         # gym.make gibt ein einzelnes Environment zurück, kein VecEnv
         def _make_env():
@@ -183,7 +192,6 @@ class MetaWorldEnvFactory:
 
         env = GymnasiumVecEnvAdapter(raw_env)
         self._log(f"✓ MT3 environment created (seed={seed + rank})")
-
         return env
 
     def make_mt10_env(
@@ -261,6 +269,7 @@ class MetaWorldEnvFactory:
         env = GymnasiumVecEnvAdapter(raw_env)
         self._log(f"✓ Custom multi-task environment created (seed={seed + rank})")
 
+
         return env
 
     def make_curriculum_env(
@@ -291,7 +300,7 @@ class MetaWorldEnvFactory:
 
         elif num_tasks == 1:
             # Single task - MT1
-        # ToDo find out why MT1 env does not work properly
+            """
             return self.make_mt1_env(
                 task_name=stage_tasks[0],
                 seed=seed,
@@ -304,7 +313,7 @@ class MetaWorldEnvFactory:
                 seed=seed,
                 max_episode_steps=max_episode_steps,
                 rank=rank
-            )"""
+            )
 
         elif num_tasks == 3:
             # Three tasks - MT3
@@ -340,6 +349,7 @@ class MetaWorldEnvFactory:
             max_episode_steps: int = 500,
             seed_offset: int = 1000,
             n_parallel_envs: int = 1
+
     ) -> tuple:
         """
         Erstelle Train- und Eval-Environment Paar mit unterschiedlichen Seeds

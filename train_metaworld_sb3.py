@@ -81,7 +81,6 @@ if __name__ == "__main__":
 
     # -------------------- Setup Paths --------------------
     MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}_{int(TOTAL_TIMESTEPS / 1e6)}M"
-    # ToDo remove hard-coding 1e4, dev Pur
 
     paths_dict = {
             "model": f"./metaworld_models/{MODEL_BASENAME}",
@@ -175,7 +174,7 @@ if __name__ == "__main__":
 
         elif TRAINING_MODE == "PROGRESSIVE":
             # Use predefined curriculum stages
-            current_tasks = curriculum_config.CURRICULUM_STAGES[CURRICULUM_STAGE]
+            current_tasks = curriculum_config.CURRICULUM_STAGES_AUG[CURRICULUM_STAGE]
 
             if DEBUG:
                 printer.print_curriculum_info(
@@ -347,12 +346,16 @@ if __name__ == "__main__":
         )
 
         curriculum_callback = ProgressiveTaskCallback(
-            curriculum_stages=curriculum_config.CURRICULUM_STAGES,
+            curriculum_stages=curriculum_config.CURRICULUM_STAGES_AUG,
             stage_thresholds=curriculum_config.STAGE_THRESHOLDS,
             task_evaluator=task_evaluator,
+            current_stage=CURRICULUM_STAGE,
             eval_freq=STAGE_EVAL_FREQ,
             min_steps_per_stage=MIN_STEPS_PER_STAGE,
-            verbose=1
+            verbose=1,
+            one_hot_dim=MAX_TASKS,
+            env_factory=env_factory,
+            eval_callback=eval_callback
         )
         callbacks.append(curriculum_callback)
 
