@@ -95,13 +95,16 @@ class TaskEvaluator:
         Returns:
             Dictionary with evaluation metrics
         """
+        
+        seed = self.seed + np.random.randint(1, 1e6)
         # Create evaluation environment
         eval_env = self.env_factory.make_mt1_env(
             task_name=task_name,
-            seed=self.seed,
+            seed=seed,
             max_episode_steps=self.max_episode_steps,
             n_envs=1  # Single environment for evaluation
         )
+        
 
         # Wrap with task encoding - use fixed one_hot_dim
         from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
