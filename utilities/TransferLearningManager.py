@@ -1,5 +1,5 @@
 from typing import List, Optional
-
+from stable_baselines3.common.utils import ConstantSchedule, FloatSchedule
 
 class TransferLearningManager:
     """Manager for Transfer Learning between tasks and stages"""
@@ -37,8 +37,15 @@ class TransferLearningManager:
 
         # Reduziere Learning Rate für Fine-Tuning
         original_lr = model.learning_rate
-        model.learning_rate = original_lr * learning_rate_multiplier
+        new_lr = original_lr * learning_rate_multiplier
+        model.learning_rate = new_lr
 
+        for optim in [model.actor.optimizer, model.critic.optimizer]:
+            for pg in optim.param_groups:
+                pg["lr"] *= learning_rate_multiplier
+        
+        model.lr_schedule = FloatSchedule(ConstantSchedule(new_lr))
+            
         print(f"[Transfer Learning] Reduced LR: {original_lr} -> {model.learning_rate}")
 
         return model
