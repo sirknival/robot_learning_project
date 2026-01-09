@@ -21,6 +21,7 @@ Papers:
 """
 
 import os
+import numpy as np
 from stable_baselines3 import SAC, TD3, DDPG
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
@@ -78,7 +79,69 @@ if __name__ == "__main__":
     DEBUG = True                   # Enable verbose debug output
 
     # ======================================================
+    #One-Hot-Test-Helpers
+    # ======================================================
+    def _onehot_report_line(obs, task_name: str, one_hot_dim: int):
+        """
+        Returns (ok: bool, line: str)
+        obs is VecEnv obs: (n_envs, obs_dim+one_hot_dim)
+        """
+        if task_name not in MT10_TASKS:
+            return False, f"BAD | task={task_name:<25} (not in MT10_TASKS)"
 
+        onehot = obs[-one_hot_dim:]
+        s = float(np.sum(onehot))
+        arg = int(np.argmax(onehot))
+        expected = int(MT10_TASKS.index(task_name))
+
+        ok = np.isclose(s, 1.0) and (arg == expected)
+        status = "OK " if ok else "BAD"
+        line = f"{status} | task={task_name:<25} argmax={arg:<2} expected={expected:<2} sum={s:0.3f}"
+        return ok, line
+
+
+    def _print_onehot_check_train(train_env, obs, infos, one_hot_dim: int, max_lines: int = 20):
+        """
+        Prints one-hot check lines for each parallel env using infos[i]["task_name"] from step().
+        """
+        # obs can be (obs, info) depending on env; normalize to obs only
+        if isinstance(obs, tuple) and len(obs) >= 1:
+            obs = obs[0]
+
+        n_envs = getattr(train_env, "num_envs", 1)
+        n_envs = int(n_envs)
+
+        print("\n=== OneHot MT10 Index Check (TRAIN step) ===")
+        lines_printed = 0
+        for i in range(n_envs):
+            if lines_printed >= max_lines:
+                print(f"... (truncated after {max_lines} lines)")
+                break
+
+            info_i = infos[i] if isinstance(infos, (list, tuple)) and len(infos) > i else {}
+            task_name = None
+            if isinstance(info_i, dict):
+                task_name = info_i.get("task_name", None)
+
+            if task_name is None:
+                print(f"BAD | env={i:<2} task_name missing in infos[{i}]")
+                lines_printed += 1
+                continue
+
+            obs_i = obs[i]
+            ok, line = _onehot_report_line(obs_i, task_name=task_name, one_hot_dim=one_hot_dim)
+            prefix = f"env={i:<2} "
+            print(prefix + line)
+            lines_printed += 1
+
+            if not ok:
+                raise RuntimeError(
+                    f"[OneHot BUG @ TRAIN step] env={i}, {line}\n"
+                    f"-> One-hot does not match MT10 index. Fix env/info task_name pipeline."
+                )
+
+
+    # ======================================================
     # -------------------- Setup Paths --------------------
     MODEL_BASENAME = f"{EXPERIMENT}_{ALGORITHM}_{int(TOTAL_TIMESTEPS / 1e6)}M"
 
@@ -236,6 +299,16 @@ if __name__ == "__main__":
             # Test environment reset
             print("\nTesting environment reset...")
             obs = train_env.reset()
+
+            # Need one step() to get infos (task_name). reset() has no infos in SB3 VecEnv.
+            n_envs = int(getattr(train_env, "num_envs", 1))
+            action_shape = train_env.action_space.shape
+            zero_action = np.zeros((n_envs,) + action_shape, dtype=np.float32)
+
+            obs2, rewards2, dones2, infos2 = train_env.step(zero_action)
+
+            _print_onehot_check_train(train_env, obs2, infos2, one_hot_dim=MAX_TASKS, max_lines=30)
+
             printer.print_success(f"Reset successful, observation shape: {obs[0].shape if isinstance(obs, tuple) else obs.shape}")
 
     except Exception as e:

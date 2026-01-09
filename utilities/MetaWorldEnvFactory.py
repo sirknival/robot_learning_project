@@ -3,7 +3,6 @@ import metaworld
 from typing import List, Dict, Optional, Union
 from training_setup_multitask.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
 from training_setup_multitask.utilities.MetaworldTasks import MT3_TASKS, MT10_TASKS
-from stable_baselines3.common.vec_env import VecMonitor
 
 
 class MetaWorldEnvFactory:
@@ -191,7 +190,7 @@ class MetaWorldEnvFactory:
             terminate_on_success=self.terminate_on_success
         )
 
-        env = GymnasiumVecEnvAdapter(raw_env)
+        env = GymnasiumVecEnvAdapter(raw_env, stage_tasks=tasks)
         self._log(f"✓ MT3 environment created (seed={seed + rank})")
         return env
 
@@ -223,7 +222,7 @@ class MetaWorldEnvFactory:
             terminate_on_success=self.terminate_on_success
         )
 
-        env = GymnasiumVecEnvAdapter(raw_env)
+        env = GymnasiumVecEnvAdapter(raw_env, stage_tasks=self.MT10_TASKS)
         self._log(f"✓ MT10 environment created (seed={seed + rank})")
 
         return env
@@ -267,7 +266,7 @@ class MetaWorldEnvFactory:
             terminate_on_success=self.terminate_on_success
         )
 
-        env = GymnasiumVecEnvAdapter(raw_env)
+        env = GymnasiumVecEnvAdapter(raw_env, stage_tasks=tasks)
         self._log(f"✓ Custom multi-task environment created (seed={seed + rank})")
 
 
@@ -325,7 +324,9 @@ class MetaWorldEnvFactory:
                 custom_tasks=stage_tasks
             )
 
-        elif num_tasks == 10 and set(stage_tasks) == set(self.MT10_TASKS):
+        #elif num_tasks == 10 and set(stage_tasks) == set(self.MT10_TASKS): #wenn anzahl passt fällt custom list mit duplikaten hier rein -> ignoriert Reihenfolge
+        elif num_tasks == 10 and stage_tasks == self.MT10_TASKS: #Liste statt Set vergleichen
+        #-> MT10 wird nur gebaut, wenn du exakt die MT10-Liste in exakt der Standardreihenfolge übergibst (ohne Duplikate)
             # All standard MT10 tasks
             return self.make_mt10_env(
                 seed=seed,
@@ -410,9 +411,6 @@ class MetaWorldEnvFactory:
             )
 
         self._log("✓ Train/Eval pair created")
-
-        train_env = VecMonitor(train_env)
-        eval_env = VecMonitor(eval_env)
 
         return train_env, eval_env
 
