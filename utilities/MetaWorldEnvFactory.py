@@ -3,11 +3,12 @@ import metaworld
 from typing import List, Dict, Optional, Union
 from training_setup_multitask.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
 from training_setup_multitask.utilities.MetaworldTasks import MT3_TASKS, MT10_TASKS
+from stable_baselines3.common.vec_env import VecMonitor
 
 
 class MetaWorldEnvFactory:
     """
-    Factory-Klasse für Meta-World Environments.
+    Factory-Klasse für Meta-World Environment.
     Unterstützt MT1, MT3, MT10 und custom Curriculum Stages.
     """
 
@@ -409,6 +410,9 @@ class MetaWorldEnvFactory:
             )
 
         self._log("✓ Train/Eval pair created")
+
+        train_env = VecMonitor(train_env)
+        eval_env = VecMonitor(eval_env)
 
         return train_env, eval_env
 
