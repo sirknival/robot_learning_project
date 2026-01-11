@@ -33,8 +33,14 @@ from training_setup_multitask.utilities.MetaWorldEnvFactory import MetaWorldEnvF
 from training_setup_multitask.utilities.algorithms import model_factory_SAC, model_factory_TD3, model_factory_DDPG
 from training_setup_multitask.utilities.TaskEvaluator import TaskEvaluator, FinalModelEvaluator
 
+from training_setup_multitask.algorithms.PCGradSAC import PCGradSAC, PCGradCallback
+from training_setup_multitask.algorithms.MultitaskSAC import MultiTaskSAC
+from training_setup_multitask.algorithms.MultiTaskTrainer import MultiTaskTrainer
+from training_setup_multitask.algorithms.PCGradTrainer import PCGradTrainer
+
 from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
 from training_setup_multitask.Callbacks.ProgressiveTaskCallback import ProgressiveTaskCallback
+
 
 if __name__ == "__main__":
     # ==================== CONFIGURATION ====================
@@ -50,7 +56,7 @@ if __name__ == "__main__":
     # -------------------- Experiment Setup --------------------
     EXPERIMENT = "MT10_CURRICULUM"  # Options: "MT1", "MT3", "MT10", "MT10_CURRICULUM"
     TASK_NAME = "reach-v3"          # Required for MT1 (e.g., "reach-v3", "push-v3")
-    ALGORITHM = "SAC"               # Options: "SAC", "TD3", "DDPG" (SAC standard)
+    ALGORITHM = "PCGradSAC"               # Options: "SAC", "TD3", "DDPG", "MultiTaskSAC", "PCGradSAC" (SAC standard)
     SEED = 42                       # Random seed for reproducibility
     N_PARALLEL_ENVS = 1             # Number of parallel environments (1-10, higher = faster training)
     MAX_TASKS = len(MT10_TASKS)     # MT10 Project; Do not change
@@ -368,6 +374,36 @@ if __name__ == "__main__":
                     else train_env.action_space
                 n_actions = action_space.shape[0]
                 model = model_factory_DDPG(n_actions, train_env, ALGORITHM, SEED)
+            elif ALGORITHM == "PCGradSAC":
+                model = PCGradSAC(
+                    policy="MlpPolicy",
+                    env=train_env,
+                    tasks=current_tasks,
+                    buffer_size_per_task=100000,
+                    use_pcgrad=True,
+                    learning_rate=3e-4,
+                    batch_size=256,
+                    tau=0.005,
+                    gamma=0.99,
+                    verbose=1,
+                    tensorboard_log=f"./metaworld_logs/{EXPERIMENT}/Algorithm/{ALGORITHM}/"
+                )
+            elif ALGORITHM == "MultiTaskSAC":
+                model = MultiTaskSAC(
+                    policy="MlpPolicy",
+                    env=train_env,
+                    tasks=current_tasks,
+                    buffer_size_per_task=100000,
+                    shared_encoder_dims=[400, 400],
+                    learning_rate=3e-4,
+                    batch_size=256,
+                    tau=0.005,
+                    gamma=0.99,
+                    verbose=1,
+                    tensorboard_log=f"./metaworld_logs/{EXPERIMENT}/Algorithm/{ALGORITHM}/"
+                )
+
+
             else:
                 raise ValueError(f"Unknown algorithm: {ALGORITHM}. Choose from 'SAC', 'TD3', or 'DDPG'")
 
@@ -406,6 +442,15 @@ if __name__ == "__main__":
     )
 
     callbacks = [eval_callback, checkpoint_callback]
+
+    if ALGORITHM == "PCGradSAC":
+        pcgrad_callback = PCGradCallback(
+            tasks=current_tasks,
+            gradient_steps_per_rollout=1,
+            verbose=1
+        )
+
+    callbacks.append(pcgrad_callback)
 
     # Add curriculum callback for progressive training
     if USE_CURRICULUM and TRAINING_MODE == "PROGRESSIVE":
@@ -460,13 +505,43 @@ if __name__ == "__main__":
     # -------------------- Start Training --------------------
 
     try:
-        model.learn(
-            total_timesteps=TOTAL_TIMESTEPS,
-            callback=callbacks,
-            log_interval=10,
-            progress_bar=True,
-            reset_num_timesteps=False
-        )
+        # Specific MultiTaskSAC learning routine
+        if ALGORITHM == "MultiTaskSAC":
+            trainer = MultiTaskTrainer(
+                model=model,
+                env=train_env,
+                tasks=MT10_TASKS,  # All Tasks (für Buffer/Heads)
+                task_sampler="uniform"
+            )
+
+            # Training
+            trainer.train(
+                total_timesteps=TOTAL_TIMESTEPS,
+                episodes_per_update=10,
+                gradient_steps_per_update=50,
+                active_tasks=current_tasks  # Train only these
+            )
+
+        # Specific PCGradSAC learning routine
+        elif ALGORITHM =="PCGradSAC":
+            trainer = PCGradTrainer(
+                model=model,
+                env=train_env,
+                tasks=current_tasks
+            )
+            trainer.train(
+                total_timesteps=TOTAL_TIMESTEPS,
+                rollout_steps=2048
+            )
+
+        else:
+            model.learn(
+                total_timesteps=TOTAL_TIMESTEPS,
+                callback=callbacks,
+                log_interval=10,
+                progress_bar=True,
+                reset_num_timesteps=False
+            )
     except KeyboardInterrupt:
         printer.print_warning("Training interrupted by user")
     except Exception as e:
