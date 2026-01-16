@@ -75,9 +75,9 @@ def model_factory_SAC(env, algorithm: str, seed: int):
         env=env,
         learning_rate=3e-4,
         buffer_size=1_000_000,
-        learning_starts=0,  # Start training sooner
+        learning_starts=10000,  # Start training sooner
         batch_size=500,
-        tau=0.005,
+        tau=0.001,
         gamma=0.99,  # Higher gamma for multi-step tasks
         train_freq=1,
         gradient_steps=1,  # Train on all available data
@@ -85,7 +85,7 @@ def model_factory_SAC(env, algorithm: str, seed: int):
         target_entropy='auto',  # Automatically set target entropy
         use_sde=False,  # State-dependent exploration (can be enabled for more exploration)
         policy_kwargs=dict(
-            net_arch=[400, 400],  # Deeper network
+            net_arch=[512, 1024, 1024, 512],  # Deeper network
             activation_fn=torch.nn.ReLU,
             log_std_init=-3,  # Initial exploration level
         ),

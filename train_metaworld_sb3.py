@@ -23,6 +23,7 @@ Papers:
 import os
 from stable_baselines3 import SAC, TD3, DDPG
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.vec_env import VecNormalize
 
 from training_setup_multitask.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS
 from training_setup_multitask.utilities.DebugPrinter import DebugPrinter
@@ -223,6 +224,17 @@ if __name__ == "__main__":
         # Apply one-hot task encoding wrapper
         train_env = OneHotTaskWrapper(train_env, current_tasks, MAX_TASKS)
         eval_env = OneHotTaskWrapper(eval_env, current_tasks, MAX_TASKS)
+
+        train_env = VecNormalize(
+            venv=train_env,
+            norm_obs=True,
+            norm_reward=True,)
+
+        eval_env = VecNormalize(
+            venv=eval_env,
+            norm_obs=True,
+            norm_reward=False,
+            training=False)
 
         if DEBUG:
             printer.print_success("OneHotTaskWrapper applied")
