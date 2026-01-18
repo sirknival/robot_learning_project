@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from stable_baselines3.common.vec_env import VecEnv
-from training_setup_multitask.utilities.MetaworldTasks import MT10_TASKS
+from helper_classes_transferLearning.utilities.MetaworldTasks import MT10_TASKS
 
 
 class OneHotTaskWrapper(VecEnv):

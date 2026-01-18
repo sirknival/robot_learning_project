@@ -1,4 +1,4 @@
-from training_setup_multitask.utilities.MetaworldTasks import MT10_TASKS
+from helper_classes_transferLearning.utilities.MetaworldTasks import MT10_TASKS
 
 
 class CurriculumConfig:

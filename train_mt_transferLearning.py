@@ -25,16 +25,16 @@ from stable_baselines3 import SAC, TD3, DDPG
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.vec_env import VecNormalize
 
-from training_setup_multitask.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS
-from training_setup_multitask.utilities.DebugPrinter import DebugPrinter
-from training_setup_multitask.utilities.CurriculumConfig import CurriculumConfig
-from training_setup_multitask.utilities.TransferLearningManager import TransferLearningManager
-from training_setup_multitask.utilities.MetaWorldEnvFactory import MetaWorldEnvFactory
-from training_setup_multitask.utilities.algorithms import model_factory_SAC, model_factory_TD3, model_factory_DDPG
-from training_setup_multitask.utilities.TaskEvaluator import TaskEvaluator, FinalModelEvaluator
+from helper_classes_transferLearning.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS
+from helper_classes_transferLearning.utilities.DebugPrinter import DebugPrinter
+from helper_classes_transferLearning.utilities.CurriculumConfig import CurriculumConfig
+from helper_classes_transferLearning.utilities.TransferLearningManager import TransferLearningManager
+from helper_classes_transferLearning.utilities.MetaWorldEnvFactory import MetaWorldEnvFactory
+from helper_classes_transferLearning.utilities.algorithms import model_factory_SAC, model_factory_TD3, model_factory_DDPG
+from helper_classes_transferLearning.utilities.TaskEvaluator import TaskEvaluator, FinalModelEvaluator
 
-from training_setup_multitask.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
-from training_setup_multitask.Callbacks.ProgressiveTaskCallback import ProgressiveTaskCallback
+from helper_classes_transferLearning.WrapperClasses.OneHotTaskWrapper import OneHotTaskWrapper
+from helper_classes_transferLearning.Callbacks.ProgressiveTaskCallback import ProgressiveTaskCallback
 
 if __name__ == "__main__":
     # ==================== CONFIGURATION ====================

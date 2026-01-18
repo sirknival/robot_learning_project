@@ -45,11 +45,6 @@ Training framework for Meta-World robotic manipulation tasks. It supports:
 # Clone the repository
 git clone https://github.com/sirknival/robot_learning_project.git
 
-# Refactor project structure
-# Git repo features different code structure than needed for deployment
-mv robot_learning_project training_setup_multitask
-mv training_setup_multitask/train_metaworld_sb3.py train_metaworld_sb3.py
-
 # Install dependencies
 pip install stable-baselines3[extra]
 pip install gymnasium

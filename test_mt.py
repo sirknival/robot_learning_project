@@ -9,43 +9,9 @@ from gymnasium import spaces
 from stable_baselines3.common.monitor import Monitor
 
 
-from train_mt import MT10_TASKS, MT3_TASKS  
-from train_mt import MultiHeadSACPolicy  
-
-# -------------------------------
-# Eval Wrapper -> append task one-hot to obs
-# -------------------------------
-class AppendTaskIdWrapper(gym.Wrapper):
-    """
-    Appends a fixed task one-hot vector to every observation.
-    This makes MT1 env observations compatible with MT training that expects task_id in obs.
-    """
-    def __init__(self, env, task_index: int, n_tasks: int):
-        super().__init__(env)
-        self.task_index = int(task_index)
-        self.n_tasks = int(n_tasks)
-        self.task_onehot = np.zeros((self.n_tasks,), dtype=np.float32)
-        self.task_onehot[self.task_index] = 1.0
-
-        # Expand observation space
-        assert isinstance(env.observation_space, spaces.Box)
-        low = env.observation_space.low
-        high = env.observation_space.high
-        low = np.concatenate([low, -np.ones(self.n_tasks, dtype=low.dtype)], axis=0)
-        high = np.concatenate([high, np.ones(self.n_tasks, dtype=high.dtype)], axis=0)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
-
-    def _augment(self, obs):
-        obs = np.asarray(obs, dtype=np.float32)
-        return np.concatenate([obs, self.task_onehot], axis=0)
-
-    def reset(self, **kwargs):
-        obs, info = self.env.reset(**kwargs)
-        return self._augment(obs), info
-
-    def step(self, action):
-        obs, reward, terminated, truncated, info = self.env.step(action)
-        return self._augment(obs), reward, terminated, truncated, info
+from helper_classes_multihead.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS  
+from helper_classes_multihead.utilities.MultiheadCritic import MultiHeadSACPolicy  
+from helper_classes_multihead.WrapperClasses.TaskIdWrapper import TaskIdDummyEnvWrapper
 
 
 if __name__ == "__main__":
@@ -93,7 +59,7 @@ if __name__ == "__main__":
         max_episode_steps=MAX_EPISODE_STEPS,
         terminate_on_success=False,
     )
-    dummy_env = AppendTaskIdWrapper(dummy_env, task_index=dummy_task_idx, n_tasks=len(MT_TASKS))
+    dummy_env = TaskIdDummyEnvWrapper(dummy_env, task_index=dummy_task_idx, n_tasks=len(MT_TASKS))
     dummy_env = Monitor(dummy_env)
 
     if ALGORITHM == "SAC":
@@ -135,7 +101,7 @@ if __name__ == "__main__":
             max_episode_steps=MAX_EPISODE_STEPS,
             terminate_on_success=False,
         )
-        env = AppendTaskIdWrapper(env, task_index=task_idx, n_tasks=len(MT_TASKS))
+        env = TaskIdDummyEnvWrapper(env, task_index=task_idx, n_tasks=len(MT_TASKS))
         env = Monitor(env)
 
         obs, info = env.reset()

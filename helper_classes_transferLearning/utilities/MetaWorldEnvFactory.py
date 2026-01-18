@@ -1,8 +1,8 @@
 import gymnasium as gym
 import metaworld
 from typing import List, Dict, Optional, Union
-from training_setup_multitask.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
-from training_setup_multitask.utilities.MetaworldTasks import MT3_TASKS, MT10_TASKS
+from helper_classes_transferLearning.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
+from helper_classes_transferLearning.utilities.MetaworldTasks import MT3_TASKS, MT10_TASKS
 from stable_baselines3.common.vec_env import VecMonitor, VecNormalize
 
 
