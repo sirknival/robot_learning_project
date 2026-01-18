@@ -19,7 +19,7 @@ import torch.nn as nn
 import gymnasium as gym
 import metaworld
 
-from stable_baselines3 import SAC, TD3, DDPG, PPO
+from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback, BaseCallback
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.vec_env import VecEnv, VecMonitor, VecEnvWrapper
@@ -30,7 +30,8 @@ from helper_classes_multihead.Callbacks.ReplayBufferCheckpointCallback import Re
 from helper_classes_multihead.utilities.MultiheadCritic import MultiHeadSACPolicy
 from helper_classes_multihead.WrapperClasses.TaskIdWrapper import TaskIdVecEnvWrapper
 from helper_classes_multihead.WrapperClasses.GymnasiumVecEnvAdapter import GymnasiumVecEnvAdapter
-from helper_classes_multihead.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS  
+from helper_classes_multihead.utilities.MetaworldTasks import MT10_TASKS, MT3_TASKS 
+from helper_classes_multihead.utilities.AlgorithmFactory import make_factory_SAC 
 
 
 # ------------------------------------------------------------
@@ -115,32 +116,32 @@ def mt10_curriculum_phases():
 
 if __name__ == "__main__":
     # ==================== CONFIGURATION ====================
+    # -------------------- Experiment Setup --------------------
     ALGORITHM = "SAC" #Only SAC implemented
-
     MT_N = "MT10" #MT3 or MT10
 
-    #advanced methods
+    # -------------------- Training Strategy --------------------
     CURRICULUM = False # False = standard MT10 or MT3 list, True = use curriculum_phases()
-    MULTI_HEAD = False # False = "MlpPolicy" (standard), True = MultiHeadSACPolicy
+    MULTI_HEAD = True # False = "MlpPolicy" (standard), True = MultiHeadSACPolicy
 
     CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
     USE_REPLAY_BUFFER = False    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
     TERMINATE_ON_SUCCESS = False
-
-
+    
+    # -------------------- Curriculum Settings --------------------
     PHASE = 0  # <-- Curriculum phase set manually
     if MT_N == "MT10":
         PHASE_LISTS = mt10_curriculum_phases()
     else:
         PHASE_LISTS = mt3_curriculum_phases()
-    
-
     FIRST_PHASE_STEPS = 9_000_000     # <-- steps for new run
     SECOND_PHASE_STEPS = 1_000_000     # <-- steps for load model(+replay)
 
+    # -------------------- Environment Settings --------------------
     SEED = 42
     MAX_EPISODE_STEPS = 500
 
+    # -------------------- Evaluation & Checkpointing --------------------
     EVAL_FREQ = 10_000 
     N_EVAL_EPISODES = 20 
     CHECKPOINT_FREQ = 25_000 
@@ -239,65 +240,7 @@ if __name__ == "__main__":
     if ALGORITHM != "SAC":
         raise ValueError("Only SAC implemented.")
 
-    if not MULTI_HEAD:
-        POLICY="MlpPolicy"
-
-        POLICY_KWARGS=dict(
-                net_arch=[512, 1024, 1024, 512],
-                activation_fn=torch.nn.ReLU,
-                log_std_init=-3.0,
-        )
-    else:
-        POLICY=MultiHeadSACPolicy
-
-        POLICY_KWARGS=dict(
-                net_arch=[512, 1024, 1024, 512],
-                activation_fn=torch.nn.ReLU,
-                log_std_init=-3.0,
-                n_tasks=N_TASKS,
-                task_id_slice=TASK_ID_SLICE,
-        )
-
-    if not CONTINUE_TRAINING:
-        model = SAC(
-            policy=POLICY,
-            env=env,
-            learning_rate=3e-4,
-            buffer_size=1_000_000,
-            learning_starts=5_000, 
-            batch_size=256, 
-            tau=0.005, 
-            gamma=0.99,
-            train_freq=1,
-            gradient_steps=1, 
-            ent_coef="auto",
-            target_entropy="auto",
-            use_sde=False,
-            policy_kwargs=POLICY_KWARGS,
-            tensorboard_log=f"./metaworld_logs/{MT_N}_SAC/",
-            verbose=1,
-            device="auto",
-            seed=SEED,
-        )
-    else:
-        if not os.path.exists(FIRST_MODEL_PATH + ".zip"):
-            raise FileNotFoundError(f"Cannot find model: {FIRST_MODEL_PATH}.zip")
-
-        print(f"Loading model from {FIRST_MODEL_PATH}.zip ...")
-        model = SAC.load(FIRST_MODEL_PATH + ".zip", env=env)
-      
-        if USE_REPLAY_BUFFER:
-            if not os.path.exists(FIRST_BUFFER_PATH):
-              raise FileNotFoundError(f"Cannot find replay buffer: {FIRST_BUFFER_PATH}")
-
-            print(f"Loading replay buffer from {FIRST_BUFFER_PATH} ...")
-            model.load_replay_buffer(FIRST_BUFFER_PATH)
-        
-        #override parameter for loaded model (test)
-        #model.ent_coef = 0.5
-        #model.learning_rate=5e-5
-        #model.target_entropy = -0.5 * n_actions
-        #model.gradient_steps=1
+    model = make_factory_SAC(env, MULTI_HEAD, CONTINUE_TRAINING, MT_N, N_TASKS, TASK_ID_SLICE, SEED, FIRST_MODEL_PATH, USE_REPLAY_BUFFER, FIRST_BUFFER_PATH)
 
     # ------------------ Callbacks ------------------
     checkpoint_callback = CheckpointCallback(
