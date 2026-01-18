@@ -9,3 +9,5 @@ __pycache__/
 
 #ignore results folder
 evaluation_results/
+
+.vscode
