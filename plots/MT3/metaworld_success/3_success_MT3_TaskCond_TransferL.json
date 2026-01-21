@@ -1,0 +1,21 @@
+{
+  "mt": "MT3",
+  "run_label": "MT3",
+  "algorithm": "SAC",
+  "seed": 42,
+  "model_path": "./metaworld_models/best_model.zip",
+  "num_episodes": 300,
+  "max_episode_steps": 500,
+  "timestamp": "2026-01-18_16-05-11",
+  "overall_success_rate": 0.8766666666666667,
+  "per_task_success_rate": {
+    "reach-v3": 0.96,
+    "push-v3": 0.75,
+    "pick-place-v3": 0.92
+  },
+  "per_task_episodes": {
+    "reach-v3": 100,
+    "push-v3": 100,
+    "pick-place-v3": 100
+  }
+}
