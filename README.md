@@ -116,7 +116,7 @@ Train on all 3 or 10 tasks simultaneously:
 
 ```python
 ALGORITHM = "SAC"
-MT_N = "MT10"
+MT_N = "MT10" #MT3 or MT10
 
 CURRICULUM = False # Curriculum training off
 MULTI_HEAD = False # Using "MlpPolicy" (standard)
