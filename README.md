@@ -120,10 +120,6 @@ MT_N = "MT10"
 
 CURRICULUM = False # Curriculum training off
 MULTI_HEAD = False # Using "MlpPolicy" (standard)
-
-CONTINUE_TRAINING = False    # Start new (FIRST_PHASE)
-USE_REPLAY_BUFFER = False    # Train without replay buffer
-TERMINATE_ON_SUCCESS = False
 ```
 
 ```bash
@@ -135,15 +131,23 @@ python train_mt_multihead.py
 Train with progressive task introduction:
 
 ```python
-ALGORITHM = "SAC" #Only SAC implemented
+ALGORITHM = "SAC"
 MT_N = "MT10" #MT3 or MT10
 
 CURRICULUM = True # Using curriculum_phases()
-MULTI_HEAD = False # False = "MlpPolicy" (standard)
+MULTI_HEAD = False # Using "MlpPolicy" (standard)
+```
 
-CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
-USE_REPLAY_BUFFER = False    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
-TERMINATE_ON_SUCCESS = False
+### 4. Multihead Policy
+
+Train with individual Q-functions for each task:
+
+```python
+ALGORITHM = "SAC"
+MT_N = "MT10" #MT3 or MT10
+
+CURRICULUM = False # Curriculum training off
+MULTI_HEAD = True # Using MultiHeadSACPolicy
 ```
 
 ---
