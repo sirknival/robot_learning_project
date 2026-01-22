@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
@@ -47,7 +49,7 @@ for path, label in CURVES:
 
 plt.xlabel("Timesteps")
 plt.ylabel("Eval reward")
-plt.ylim(0, 800_000)
+plt.ylim(0, 400_000)
 plt.grid(True)
 plt.legend()
 

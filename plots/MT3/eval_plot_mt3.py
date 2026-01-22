@@ -1,16 +1,18 @@
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
-SHOW_STD = False   #std on/off
+SHOW_STD = True   #std on/off
 STEP = 1           # polot each n. point
 
 
 #MT3
 CURVES = [
     ("./metaworld_logs/1_evaluations_MT3_default.npz", "MT3-SAC"),
-    ("./metaworld_logs/2_evaluations_MT3_TaskCond.npz", "MT3-SAC with Task Conditioning"),
-    ("./metaworld_logs/3_evaluations_MT3_TaskCond_TransferL.npz", "MT3-SAC with Task Conditioning + Transfer Learning"),
+    ("./metaworld_logs/2_evaluations_MT3_TaskCond.npz", "MT3-SAC with One-hot Encoding"),
+    ("./metaworld_logs/3_evaluations_MT3_TaskCond_TransferL.npz", "MT3-SAC with One-hot Encoding + Transfer Learning"),
 ]
 
 
@@ -47,7 +49,7 @@ for path, label in CURVES:
             alpha=0.2,
             linewidth=0
         )
-
+plt.xlim((0, 8e6))
 plt.xlabel("Timesteps")
 plt.ylabel("Eval reward")
 plt.ylim(0, 800_000)

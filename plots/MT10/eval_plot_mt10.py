@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
@@ -9,8 +11,8 @@ STEP = 2           # polot each n. point
 #MT10
 CURVES = [
     ("./metaworld_logs/1_evaluations_MT10_default.npz", "MT10-SAC"),
-    ("./metaworld_logs/2_evaluations_MT10_TaskCond.npz", "MT10-SAC with Task Conditioning"),
-    ("./metaworld_logs/3_evaluations_MT10_TaskCond_Multihead.npz", "MT10-SAC with Task Conditioning + Multi Head Critic"),
+    ("./metaworld_logs/2_evaluations_MT10_TaskCond.npz", "MT10-SAC with One-hot Encoding"),
+    ("./metaworld_logs/3_evaluations_MT10_TaskCond_Multihead.npz", "MT10-SAC with One-hot Encoding + Multi-head Critic"),
 ]
 
 plt.figure()
@@ -49,9 +51,10 @@ for path, label in CURVES:
 
 plt.xlabel("Timesteps")
 plt.ylabel("Eval reward")
+plt.xlim(0, 35e6)
 plt.ylim(0, 800_000)
 plt.grid(True)
-plt.legend()
+plt.legend(loc='upper left')
 
 plt.savefig("./metaworld_logs/eval_curve_MT10.png", dpi=300, bbox_inches="tight")
 plt.show()

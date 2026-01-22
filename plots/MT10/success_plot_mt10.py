@@ -1,21 +1,27 @@
 
 import os, glob, json
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 MT_N = "MT10"
-RESULT_DIR = f"./metaworld_logs/eval_results_{MT_N}"
+RESULT_DIR = f"./metaworld_success/"
+files = [
+    f for f in os.listdir(RESULT_DIR)
+    if os.path.isfile(os.path.join(RESULT_DIR, f))
+]
 
 
-CUSTOM_LABELS = ["MT10-SAC", "MT10-SAC with Task Conditioning", "MT10-SAC with Task Conditioning + Multi Head Critic", "MT10-SAC with Task Conditioning + Multi Head Critic + Curriculum Learning"]
+CUSTOM_LABELS = ["MT10-SAC", "MT10-SAC with One-hot Encoding", "MT10-SAC with One-hot Encoding + Multi-head Critic", "MT10-SAC with One-hot Encoding + Multi-head Critic + Curriculum Learning V1"]
 
-files = sorted(glob.glob(os.path.join(RESULT_DIR, "*_success_*.json")))
 if not files:
     raise FileNotFoundError(f"No result json files found in {RESULT_DIR}")
 
 runs = []
 for fp in files:
-    with open(fp, "r") as f:
+    full_path = os.path.join(RESULT_DIR, fp)
+    with open(full_path, "r") as f:
         runs.append(json.load(f))
 
 tasks = list(runs[0]["per_task_success_rate"].keys())
