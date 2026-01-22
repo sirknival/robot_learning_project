@@ -21,20 +21,18 @@ If a section header is labeled with **v1**, the described content refers exclusi
 
 ## Overview
 
-Training framework **v1** for Meta-World robotic manipulation tasks. It supports:
-
-- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
+Training frameworks for Meta-World robotic manipulation tasks. Both (**v1 & v2**) support:
 - **Curriculum Learning**: Progressive task introduction with automatic stage transitions
-- **Transfer Learning**: Fine-tune pretrained models for new tasks
 - **Parallel Training**: Multi-process environments for faster training
+
+**v1** supports:
+- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
+- **Transfer Learning**: Fine-tune pretrained models for new tasks
 - **Multiple Algorithms**: SAC, TD3, DDPG
 
-Training framework **v2** for Meta-World robotic manipulation tasks. It supports:
-
-- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
-- **Curriculum Learning**: Progressive task introduction with automatic stage transitions
+**v2** supports:
+- **Multiple Training Modes**: MT3 (3 tasks), MT10 (all 10 tasks)
 - **Multihead Policy**: Individual Q-Funciton for each task separately
-- **Parallel Training**: Multi-process environments for faster training
 - **One Algorithm**: SAC
 
 
@@ -72,7 +70,7 @@ python3 train_metaworld_sb3.py
 
 ---
 
-## Quick Start
+## Quick Start (**v1**)
 
 ### 1. Single Task Training (MT1)
 
@@ -87,7 +85,7 @@ N_PARALLEL_ENVS = 1
 ```
 
 ```bash
-python train_metaworld_sb3.py
+python train_mt_transferLearning.py
 ```
 
 ### 2. Multi-Task Training (MT10)
@@ -108,6 +106,44 @@ EXPERIMENT = "MT10_CURRICULUM"
 TRAINING_MODE = "PROGRESSIVE"
 CURRICULUM_STAGE = 0  # Start from easiest tasks
 USE_CURRICULUM = True
+```
+
+## Quick Start (**v2**)
+
+### 1. Multi-Task Training (MT3 or MT10)
+
+Train on all 3 or 10 tasks simultaneously:
+
+```python
+ALGORITHM = "SAC"
+MT_N = "MT10"
+
+CURRICULUM = False # Curriculum training off
+MULTI_HEAD = False # Using "MlpPolicy" (standard)
+
+CONTINUE_TRAINING = False    # Start new (FIRST_PHASE)
+USE_REPLAY_BUFFER = False    # Train without replay buffer
+TERMINATE_ON_SUCCESS = False
+```
+
+```bash
+python train_mt_multihead.py
+```
+
+### 3. Curriculum Learning
+
+Train with progressive task introduction:
+
+```python
+ALGORITHM = "SAC" #Only SAC implemented
+MT_N = "MT10" #MT3 or MT10
+
+CURRICULUM = True # Using curriculum_phases()
+MULTI_HEAD = False # False = "MlpPolicy" (standard)
+
+CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
+USE_REPLAY_BUFFER = False    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
+TERMINATE_ON_SUCCESS = False
 ```
 
 ---
