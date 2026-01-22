@@ -154,7 +154,7 @@ MULTI_HEAD = True # Using MultiHeadSACPolicy
 
 ## Training Modes
 
-### MT1 - Single Task Training
+### MT1 - Single Task Training (**v1**)
 
 **Use Case**: Focus on mastering one specific task.
 
@@ -172,35 +172,47 @@ N_PARALLEL_ENVS = 1    # Number of parallel environments
 
 ---
 
-### MT3 - Three Task Training
+### MT3 - Three Task Training (**v1 & v2**)
 
 **Use Case**: Train on a subset of related tasks, defined in task description.
 
-**Configuration**:
+**Configuration** (**v1**):
 ```python
 EXPERIMENT = "MT3"
 # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
 # Tasks are selected automatically
 ```
 
+**Configuration** (**v2**):
+```python
+MT_N = "MT3"
+CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
+```
+
 ---
 
-### MT10 - Full Multi-Task Training
+### MT10 - Full Multi-Task Training (**v1 & v2**)
 
 **Use Case**: Train a general-purpose policy across all tasks.
 
-**Configuration**:
+**Configuration** (**v1**):
 ```python
 EXPERIMENT = "MT10"
 # Standard MetaWorld MT10-task set
 # Tasks are selected automatically
 ```
 
+**Configuration** (**v2**):
+```python
+MT_N = "MT10"
+CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3", "door-open-v3", "drawer-open-v3", "drawer-close-v3", "button-press-topdown-v3", "peg-insert-side-v3", "window-open-v3", "window-close-v3"]
+```
+
 ---
 
-## Configuration Options
+## Configuration Options (**v1 & v2**)
 
-### Basic Settings
+### Basic Settings (**v1**)
 
 ```python
 # -------------------- Experiment Setup --------------------
@@ -211,7 +223,15 @@ SEED = 42                       # Random seed
 N_PARALLEL_ENVS = 1             # Parallel environments (MT1 only)
 ```
 
-### Training Parameters
+### Basic Settings (**v2**)
+
+```python
+# -------------------- Experiment Setup --------------------
+ALGORITHM = "SAC"               # Only SAC implemented
+MT_N = "MT10"                   # MT3 or MT10
+```
+
+### Training Parameters (**v1**)
 
 ```python
 # -------------------- Training Phases --------------------
@@ -229,7 +249,23 @@ MAX_EPISODE_STEPS = 500          # Steps per episode
 NORMALIZE_REWARD = False         # Reward normalization
 ```
 
-### Evaluation & Checkpointing
+### Training Parameters (**v2**)
+
+```python
+# -------------------- Training Strategy --------------------
+CURRICULUM = False               # False = standard MT10 or MT3 list, True = use curriculum_phases()
+MULTI_HEAD = True                # False = "MlpPolicy" (standard), True = MultiHeadSACPolicy
+
+CONTINUE_TRAINING = False        # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
+USE_REPLAY_BUFFER = False        # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
+TERMINATE_ON_SUCCESS = False
+
+# -------------------- Environment Settings --------------------
+MAX_EPISODE_STEPS = 500          # Steps per episode
+NORMALIZE_REWARD = False         # Reward normalization
+```
+
+### Evaluation & Checkpointing (**v1**)
 
 ```python
 # -------------------- Evaluation & Checkpointing --------------------
@@ -238,7 +274,17 @@ N_EVAL_EPISODES = 20           # Episodes per evaluation
 CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
 ```
 
-### Performance Settings
+### Evaluation & Checkpointing (**v2**)
+
+```python
+# -------------------- Evaluation & Checkpointing --------------------
+EVAL_FREQ = 10_000 
+N_EVAL_EPISODES = 20 
+CHECKPOINT_FREQ = 25_000 
+```
+
+
+### Performance Settings (**v1**)
 
 ```python
 # -------------------- Performance --------------------
