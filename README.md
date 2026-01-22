@@ -21,7 +21,7 @@ If a section header is labeled with **v1**, the described content refers exclusi
 
 ## Overview
 
-Training framework for Meta-World robotic manipulation tasks. It supports:
+Training framework **v1** for Meta-World robotic manipulation tasks. It supports:
 
 - **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
 - **Curriculum Learning**: Progressive task introduction with automatic stage transitions
@@ -29,7 +29,16 @@ Training framework for Meta-World robotic manipulation tasks. It supports:
 - **Parallel Training**: Multi-process environments for faster training
 - **Multiple Algorithms**: SAC, TD3, DDPG
 
-### Supported Tasks (MT10)
+Training framework **v2** for Meta-World robotic manipulation tasks. It supports:
+
+- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
+- **Curriculum Learning**: Progressive task introduction with automatic stage transitions
+- **Multihead Policy**: Individual Q-Funciton for each task separately
+- **Parallel Training**: Multi-process environments for faster training
+- **One Algorithm**: SAC
+
+
+### Supported Tasks (MT10) (**v1 & v2**)
 
 1. `reach-v3` - Simple reaching task
 2. `push-v3` - Push object to target
@@ -44,7 +53,7 @@ Training framework for Meta-World robotic manipulation tasks. It supports:
 
 ---
 
-## Installation
+## Installation (**v1 & v2**)
 
 ```bash
 # Clone the repository
