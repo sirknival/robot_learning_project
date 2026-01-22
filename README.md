@@ -1,5 +1,10 @@
 # Meta-World Multi-Task Training Framework
 
+During the development of the Meta-World Multi-Task Training Framework, two different variants were developed in parallel. The first variant is denoted as **v1** and implemented in `train_mt_transferLearning.py`, while the second variant is denoted as **v2** and implemented in `train_mt_multihead.py`.
+
+If a section header is labeled with **v1**, the described content refers exclusively to the first variant. Likewise, headers labeled with **v2** refer exclusively to the second variant. Sections marked with **v1 & v2** indicate that the described concepts or implementations apply to both variants.
+
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
