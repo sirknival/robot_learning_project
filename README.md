@@ -490,7 +490,7 @@ TERMINATE_ON_SUCCESS = False
 ```
 A separate critic can be implemented for each task during training to evaluate state-action pairs separately.
 
-## Performance Optimization
+## Performance Optimization (**V1**)
 
 ### Parallel Training (MT1 Only)
 
@@ -548,7 +548,7 @@ N_PARALLEL_ENVS = max(1, int(os.cpu_count() * 0.75))
 
 ## Advanced Features
 
-### Custom Curriculum Stages
+### Custom Curriculum Stages  (**V1**)
 
 Edit `CurriculumConfig` to define custom stages:
 
@@ -562,7 +562,48 @@ CUSTOM_CURRICULUM_STAGES = [
 ]
 ```
 
-### Custom Task Difficulties
+### Custom Curriculum Stages  (**V2**)
+
+Edit `mtN_curriculum_phases()` to define custom stages:
+
+```python
+def mt3_curriculum_phases():
+    phase0 = ["push-v3"] * 15 + ["reach-v3"] * 15 + ["pick-place-v3"] * 0
+    #phase1 = ["push-v3"] * 15 + ["reach-v3"] * 15 
+    return [phase0]
+
+def mt10_curriculum_phases():
+
+    phase0 = (
+        ["reach-v3"] * 6 +
+        ["push-v3"] * 6 +
+        ["button-press-topdown-v3"] * 3 +
+        ["drawer-open-v3"] * 3 +
+        ["drawer-close-v3"] * 3 +
+        ["window-open-v3"] * 3 +
+        ["window-close-v3"] * 3 +
+        ["door-open-v3"] * 3 +
+        ["peg-insert-side-v3"] * 0 +
+        ["pick-place-v3"] * 0
+    )
+
+    #phase1 = (
+    #    ["reach-v3"] * 2 +
+    #    ["push-v3"] * 2 +
+    #    ["button-press-topdown-v3"] * 7 +
+    #    ["drawer-open-v3"] * 2 +
+    #    ["drawer-close-v3"] * 2 +
+    #    ["window-open-v3"] * 2 +
+    #    ["window-close-v3"] * 2 +
+    #    ["door-open-v3"] * 7 +
+    #    ["peg-insert-side-v3"] * 2 +
+    #    ["pick-place-v3"] * 2
+    #)
+  
+    return [phase0]
+```
+
+### Custom Task Difficulties (**V1**)
 
 Adjust task difficulty ratings:
 
@@ -576,7 +617,7 @@ TASK_DIFFICULTY = {
 }
 ```
 
-### Replay Buffer Management
+### Replay Buffer Management (**V1**)
 
 ```python
 # Save replay buffer
@@ -587,7 +628,21 @@ CONTINUE_TRAINING = True
 # Buffer is automatically loaded from paths_dict
 ```
 
-### Custom Evaluation
+### Replay Buffer Management (**V2**)
+
+```python
+# Set Paths and Names for the Final Model and Replay Buffer
+FIRST_MODEL_PATH = f"./metaworld_models/SAC_{MT_N}_9M"
+FIRST_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_9M_replay.pkl" # directory where the buffer of the FIRST_PHASE is saved
+SECOND_MODEL_PATH = f"./metaworld_models/SAC_{MT_N}_10M"
+SECOND_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_10M_replay.pkl" # directory where the buffer of the SECOND_PHASE is saved
+
+# Load replay buffer (when continuing training)
+CONTINUE_TRAINING = True    # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
+USE_REPLAY_BUFFER = True    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
+```
+
+### Custom Evaluation (**V1 & V2**)
 
 ```python
 # Modify evaluation frequency
@@ -601,7 +656,7 @@ N_EVAL_EPISODES = 50  # More robust evaluation
 
 ## Examples
 
-### Example 1: Quick MT1 Training
+### Example 1: Quick MT1 Training (**V1**)
 
 **Goal**: Train a reaching agent as fast as possible.
 
@@ -619,7 +674,7 @@ CHECKPOINT_FREQ = 25000
 
 ---
 
-### Example 2: Full Curriculum Training
+### Example 2: Full Curriculum Training (**V1**)
 
 **Goal**: Train a general policy using curriculum learning.
 
@@ -644,7 +699,7 @@ python train_metaworld.py
 
 ---
 
-### Example 3: Transfer Learning Experiment
+### Example 3: Transfer Learning Experiment (**V1**)
 
 **Goal**: Compare training with and without transfer learning.
 
@@ -669,7 +724,7 @@ SEL_TRAIN_PHASE = 1  # Same 5M steps
 
 ---
 
-### Example 4: Benchmarking MT10
+### Example 4: Benchmarking MT10 (**V1**)
 
 **Goal**: Train and benchmark on all MT10 tasks.
 
@@ -690,7 +745,7 @@ tensorboard --logdir=./metaworld_logs/
 
 ---
 
-### Example 5: Resume Training
+### Example 5: Resume Training (**V1**)
 
 **Goal**: Continue training from a checkpoint.
 
@@ -701,6 +756,16 @@ SEL_TRAIN_PHASE = 2  # Phase 2: 5M → 10M steps
 # Model and buffer automatically loaded from:
 # ./metaworld_models/MT10_SAC_5M.zip
 # ./metaworld_models/MT10_SAC_5M_replay.pkl
+```
+
+### Example 5: Resume Training (**V2**)
+
+```python
+CONTINUE_TRAINING = True # True = load model (SECOND_PHASE)
+
+# Model and buffer automatically loaded from:
+FIRST_MODEL_PATH = f"./metaworld_models/SAC_{MT_N}_9M"
+FIRST_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_9M_replay.pkl"
 ```
 
 ---
