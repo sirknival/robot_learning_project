@@ -774,9 +774,10 @@ FIRST_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_9M_replay.pkl"
 ## File Structure
 
 ```
-meta-world-training/
-├── train_metaworld.py                    # Main training script
-├── training_setup_multitask/
+robot_learning_project/
+├── train_mt_transferLearning.py         # Main training script V1
+├── train_mt_multihead.py                # Main training script V2
+├── helper_classes_transferLearning/
 │   ├── utilities/
 │   │   ├── MetaWorldEnvFactory.py       # Environment creation
 │   │   ├── DebugPrinter.py              # Logging utilities
@@ -784,13 +785,24 @@ meta-world-training/
 │   │   ├── TransferLearningManager.py   # Transfer learning
 │   │   ├── MetaworldTasks.py            # Task definitions
 │   │   ├── TaskEvaluator.py             # Model evalutaion
-│   │   └── algorithms.py                # Model factories
+│   │   └── AlgorithmsFactory.py         # Model factories
 │   ├── WrapperClasses/
 │   │   ├── OneHotTaskWrapper.py         # Task encoding wrapper
 │   │   └── GymnasiumVecEnvAdapter.py    # Gymnasium adapter
 │   └── Callbacks/
 │       ├── ReplayBufferCheckpointCallback.py   # Legacy Code
+│       ├── PrintOptimizerCallback.py    # Optimizer callback
 │       └── ProgressiveTaskCallback.py   # Curriculum callback
+├── helper_classes_multihead/
+│   ├── utilities/
+│   │   ├── MetaworldTasks.py            # Task definitions
+│   │   ├── MultiheadCritic.py           # Model evalutaion
+│   │   └── AlgorithmFactory.py          # Model factories
+│   ├── WrapperClasses/
+│   │   ├── TaskIdWrapper.py             # Task encoding wrapper
+│   │   └── GymnasiumVecEnvAdapter.py    # Gymnasium adapter
+│   └── Callbacks/
+│       └── ReplayBufferCheckpointCallback.py   # Legacy Code
 ├── metaworld_models/                    # Saved models
 │   ├── checkpoints_*/                   # Training checkpoints
 │   ├── best_*/                          # Best models
