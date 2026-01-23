@@ -393,7 +393,7 @@ python train_metaworld.py
 
 ---
 
-### 3. Mixed Training (Curriculum) (**V1 & V2**)
+### 3. Mixed Training (Curriculum) (**V1**)
 
 **Strategy**: Start with easy tasks, gradually add harder ones.
 
@@ -462,6 +462,33 @@ PRETRAINED_MODEL_PATH = "./metaworld_models/MT1_SAC_reach-v3_5M.zip"
 - drawer-open-v3 ↔ drawer-close-v3 (inverse tasks)
 
 ---
+
+### 5. Phase Training (Curriculum) (**V2**)
+
+**Strategy:** Use all tasks defined in the `mtN_curriculum_phases()` list.
+
+**Configuration**:
+```python
+CURRICULUM = True # Use curriculum_phases()
+MULTI_HEAD = False # False = "MlpPolicy" (standard)
+
+CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE)
+USE_REPLAY_BUFFER = False    # False = train without replay buffer
+TERMINATE_ON_SUCCESS = False
+```
+The tasks and the number of parallel environments assigned to each task can be defined manually, depending on the relative task difficulty.
+
+### 6. Training with Multi-Head SAC Policy (Curriculum) (**V2**)
+
+```python
+CURRICULUM = False # False = standard MT10 or MT3 list, True = use curriculum_phases()
+MULTI_HEAD = True # MultiHeadSACPolicy
+
+CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE)
+USE_REPLAY_BUFFER = False    # False = train without replay buffer
+TERMINATE_ON_SUCCESS = False
+```
+A separate critic can be implemented for each task during training to evaluate state-action pairs separately.
 
 ## Performance Optimization
 
