@@ -1,8 +1,8 @@
 # Meta-World Multi-Task Training Framework
 
-During the development of the Meta-World Multi-Task Training Framework, two different variants were developed in parallel. The first variant is denoted as **v1** and implemented in `train_mt_transferLearning.py`, while the second variant is denoted as **v2** and implemented in `train_mt_multihead.py`.
+During the development of the Meta-World Multi-Task Training Framework, two different variants were developed in parallel. The first variant is denoted as **V1** and implemented in `train_mt_transferLearning.py`, while the second variant is denoted as **V2** and implemented in `train_mt_multihead.py`.
 
-If a section header is labeled with **v1**, the described content refers exclusively to the first variant. Likewise, headers labeled with **v2** refer exclusively to the second variant. Sections marked with **v1 & v2** indicate that the described concepts or implementations apply to both variants.
+If a section header is labeled with **V1**, the described content refers exclusively to the first variant. Likewise, headers labeled with **V2** refer exclusively to the second variant. Sections marked with **V1 & V2** indicate that the described concepts or implementations apply to both variants.
 
 
 ## 📋 Table of Contents
@@ -21,22 +21,22 @@ If a section header is labeled with **v1**, the described content refers exclusi
 
 ## Overview
 
-Training frameworks for Meta-World robotic manipulation tasks. Both (**v1 & v2**) support:
+Training frameworks for Meta-World robotic manipulation tasks. Both (**V1 & V2**) support:
 - **Curriculum Learning**: Progressive task introduction with automatic stage transitions
 - **Parallel Training**: Multi-process environments for faster training
 
-**v1** supports:
+**V1** supports:
 - **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
 - **Transfer Learning**: Fine-tune pretrained models for new tasks
 - **Multiple Algorithms**: SAC, TD3, DDPG
 
-**v2** supports:
+**V2** supports:
 - **Multiple Training Modes**: MT3 (3 tasks), MT10 (all 10 tasks)
 - **Multihead Policy**: Individual Q-Funciton for each task separately
 - **One Algorithm**: SAC
 
 
-### Supported Tasks (MT10) (**v1 & v2**)
+### Supported Tasks (MT10) (**V1 & V2**)
 
 1. `reach-v3` - Simple reaching task
 2. `push-v3` - Push object to target
@@ -51,7 +51,7 @@ Training frameworks for Meta-World robotic manipulation tasks. Both (**v1 & v2**
 
 ---
 
-## Installation (**v1 & v2**)
+## Installation (**V1 & V2**)
 
 ```bash
 # Clone the repository
@@ -70,7 +70,7 @@ python3 train_metaworld_sb3.py
 
 ---
 
-## Quick Start (**v1**)
+## Quick Start (**V1**)
 
 ### 1. Single Task Training (MT1)
 
@@ -108,7 +108,7 @@ CURRICULUM_STAGE = 0  # Start from easiest tasks
 USE_CURRICULUM = True
 ```
 
-## Quick Start (**v2**)
+## Quick Start (**V2**)
 
 ### 1. Multi-Task Training (MT3 or MT10)
 
@@ -154,7 +154,7 @@ MULTI_HEAD = True # Using MultiHeadSACPolicy
 
 ## Training Modes
 
-### MT1 - Single Task Training (**v1**)
+### MT1 - Single Task Training (**V1**)
 
 **Use Case**: Focus on mastering one specific task.
 
@@ -172,18 +172,18 @@ N_PARALLEL_ENVS = 1    # Number of parallel environments
 
 ---
 
-### MT3 - Three Task Training (**v1 & v2**)
+### MT3 - Three Task Training (**V1 & V2**)
 
 **Use Case**: Train on a subset of related tasks, defined in task description.
 
-**Configuration** (**v1**):
+**Configuration** (**V1**):
 ```python
 EXPERIMENT = "MT3"
 # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
 # Tasks are selected automatically
 ```
 
-**Configuration** (**v2**):
+**Configuration** (**V2**):
 ```python
 MT_N = "MT3"
 CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
@@ -191,18 +191,18 @@ CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
 
 ---
 
-### MT10 - Full Multi-Task Training (**v1 & v2**)
+### MT10 - Full Multi-Task Training (**V1 & V2**)
 
 **Use Case**: Train a general-purpose policy across all tasks.
 
-**Configuration** (**v1**):
+**Configuration** (**V1**):
 ```python
 EXPERIMENT = "MT10"
 # Standard MetaWorld MT10-task set
 # Tasks are selected automatically
 ```
 
-**Configuration** (**v2**):
+**Configuration** (**V2**):
 ```python
 MT_N = "MT10"
 CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3", "door-open-v3", "drawer-open-v3", "drawer-close-v3", "button-press-topdown-v3", "peg-insert-side-v3", "window-open-v3", "window-close-v3"]
@@ -210,9 +210,9 @@ CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3", "do
 
 ---
 
-## Configuration Options (**v1 & v2**)
+## Configuration Options (**V1 & V2**)
 
-### Basic Settings (**v1**)
+### Basic Settings (**V1**)
 
 ```python
 # -------------------- Experiment Setup --------------------
@@ -223,7 +223,7 @@ SEED = 42                       # Random seed
 N_PARALLEL_ENVS = 1             # Parallel environments (MT1 only)
 ```
 
-### Basic Settings (**v2**)
+### Basic Settings (**V2**)
 
 ```python
 # -------------------- Experiment Setup --------------------
@@ -231,7 +231,7 @@ ALGORITHM = "SAC"               # Only SAC implemented
 MT_N = "MT10"                   # MT3 or MT10
 ```
 
-### Training Parameters (**v1**)
+### Training Parameters (**V1**)
 
 ```python
 # -------------------- Training Phases --------------------
@@ -249,7 +249,7 @@ MAX_EPISODE_STEPS = 500          # Steps per episode
 NORMALIZE_REWARD = False         # Reward normalization
 ```
 
-### Training Parameters (**v2**)
+### Training Parameters (**V2**)
 
 ```python
 # -------------------- Training Strategy --------------------
@@ -265,7 +265,7 @@ MAX_EPISODE_STEPS = 500          # Steps per episode
 NORMALIZE_REWARD = False         # Reward normalization
 ```
 
-### Evaluation & Checkpointing (**v1**)
+### Evaluation & Checkpointing (**V1**)
 
 ```python
 # -------------------- Evaluation & Checkpointing --------------------
@@ -274,7 +274,7 @@ N_EVAL_EPISODES = 20           # Episodes per evaluation
 CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
 ```
 
-### Evaluation & Checkpointing (**v2**)
+### Evaluation & Checkpointing (**V2**)
 
 ```python
 # -------------------- Evaluation & Checkpointing --------------------
@@ -284,7 +284,7 @@ CHECKPOINT_FREQ = 25_000
 ```
 
 
-### Performance Settings (**v1**)
+### Performance Settings (**V1**)
 
 ```python
 # -------------------- Performance --------------------
@@ -296,7 +296,7 @@ N_PARALLEL_ENVS = 8            # Number of parallel environments
 
 ## Training Strategies
 
-### 1. Sequential Training (Curriculum)
+### 1. Sequential Training (Curriculum) (**V1**)
 
 **Strategy**: Train tasks one by one, ordered by difficulty.
 
@@ -341,7 +341,7 @@ python train_metaworld.py
 
 ---
 
-### 2. Progressive Training (Curriculum)
+### 2. Progressive Training (Curriculum) (**V1**)
 
 **Strategy**: Gradually add more tasks to the training set.
 
@@ -393,7 +393,7 @@ python train_metaworld.py
 
 ---
 
-### 3. Mixed Training (Curriculum)
+### 3. Mixed Training (Curriculum) (**V1 & V2**)
 
 **Strategy**: Start with easy tasks, gradually add harder ones.
 
@@ -414,7 +414,7 @@ CURRICULUM_STAGE = 0
 
 ---
 
-### 4. Transfer Learning
+### 4. Transfer Learning (**V1**)
 
 **Strategy**: Use pretrained models to speed up learning on new tasks.
 
