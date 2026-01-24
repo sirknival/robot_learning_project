@@ -126,7 +126,7 @@ MULTI_HEAD = False # Using "MlpPolicy" (standard)
 python train_mt_multihead.py
 ```
 
-### 3. Curriculum Learning
+### 2. Curriculum Learning
 
 Train with progressive task introduction:
 
@@ -138,7 +138,7 @@ CURRICULUM = True # Using curriculum_phases()
 MULTI_HEAD = False # Using "MlpPolicy" (standard)
 ```
 
-### 4. Multihead Policy
+### 3. Multihead Policy
 
 Train with individual Q-functions for each task:
 
