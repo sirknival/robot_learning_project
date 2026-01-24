@@ -25,15 +25,15 @@ Training frameworks for Meta-World robotic manipulation tasks. Both (**V1 & V2**
 - **Curriculum Learning**: Progressive task introduction with automatic stage transitions
 - **Parallel Training**: Multi-process environments for faster training
 
-**V2** supports:
-- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
-- **Transfer Learning**: Fine-tune pretrained models for new tasks
-- **Multiple Algorithms**: SAC, TD3, DDPG
-
 **V1** supports:
 - **Multiple Training Modes**: MT3 (3 tasks), MT10 (all 10 tasks)
 - **Multihead Policy**: Individual Q-Funciton for each task separately
 - **One Algorithm**: SAC
+
+**V2** supports:
+- **Multiple Training Modes**: MT1 (single task), MT3 (3 tasks), MT10 (all 10 tasks)
+- **Transfer Learning**: Fine-tune pretrained models for new tasks
+- **Multiple Algorithms**: SAC, TD3, DDPG
 
 
 ### Supported Tasks (MT10) (**V1 & V2**)
