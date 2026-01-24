@@ -206,7 +206,8 @@ EXPERIMENT = "MT10"
 **Configuration** (**V1**):
 ```python
 MT_N = "MT10"
-CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3", "door-open-v3", "drawer-open-v3", "drawer-close-v3", "button-press-topdown-v3", "peg-insert-side-v3", "window-open-v3", "window-close-v3"]
+# Standard MetaWorld MT10-task set
+# Tasks are selected automatically
 ```
 
 ---
@@ -230,6 +231,7 @@ N_PARALLEL_ENVS = 1             # Parallel environments (MT1 only)
 # -------------------- Experiment Setup --------------------
 ALGORITHM = "SAC"               # Only SAC implemented
 MT_N = "MT10"                   # MT3 or MT10
+SEED = 42                       # Random seed
 ```
 
 ### Training Parameters (**V2**)
@@ -255,7 +257,7 @@ NORMALIZE_REWARD = False         # Reward normalization
 ```python
 # -------------------- Training Strategy --------------------
 CURRICULUM = False               # False = standard MT10 or MT3 list, True = use curriculum_phases()
-MULTI_HEAD = True                # False = "MlpPolicy" (standard), True = MultiHeadSACPolicy
+MULTI_HEAD = False               # False = "MlpPolicy" (standard), True = MultiHeadSACPolicy
 
 CONTINUE_TRAINING = False        # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
 USE_REPLAY_BUFFER = False        # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
@@ -266,7 +268,7 @@ MAX_EPISODE_STEPS = 500          # Steps per episode
 NORMALIZE_REWARD = False         # Reward normalization
 ```
 
-### Evaluation & Checkpointing (**V2**)
+### Evaluation & Checkpointing (**V1 & V2**)
 
 ```python
 # -------------------- Evaluation & Checkpointing --------------------
@@ -274,16 +276,6 @@ EVAL_FREQ = 10000              # Evaluate every N steps
 N_EVAL_EPISODES = 20           # Episodes per evaluation
 CHECKPOINT_FREQ = 50000        # Save checkpoint every N steps
 ```
-
-### Evaluation & Checkpointing (**V1**)
-
-```python
-# -------------------- Evaluation & Checkpointing --------------------
-EVAL_FREQ = 10_000 
-N_EVAL_EPISODES = 20 
-CHECKPOINT_FREQ = 25_000 
-```
-
 
 ### Performance Settings (**V2**)
 
@@ -479,17 +471,28 @@ TERMINATE_ON_SUCCESS = False
 ```
 The tasks and the number of parallel environments assigned to each task can be defined manually, depending on the relative task difficulty.
 
-### 6. Training with Multi-Head SAC Policy (Curriculum) (**V1**)
+### 6. Training with Multi-Head SAC Critic (**V1**)
 
 ```python
 CURRICULUM = False # False = standard MT10 or MT3 list, True = use curriculum_phases()
-MULTI_HEAD = True # MultiHeadSACPolicy
+MULTI_HEAD = True # True = MultiHeadSACPolicy
 
 CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE)
 USE_REPLAY_BUFFER = False    # False = train without replay buffer
 TERMINATE_ON_SUCCESS = False
 ```
 A separate critic can be implemented for each task during training to evaluate state-action pairs separately.
+
+### 7. Training with Multi-Head SAC Critic (Curriculum) (**V1**)
+
+```python
+CURRICULUM = True # False = standard MT10 or MT3 list, True = use curriculum_phases()
+MULTI_HEAD = True # True = MultiHeadSACPolicy
+
+CONTINUE_TRAINING = False    # False = start new (FIRST_PHASE)
+USE_REPLAY_BUFFER = False    # False = train without replay buffer
+TERMINATE_ON_SUCCESS = False
+```
 
 ## Performance Optimization (**V2**)
 
@@ -571,7 +574,7 @@ Edit `mtN_curriculum_phases()` to define custom stages:
 def mt3_curriculum_phases():
     phase0 = ["push-v3"] * 15 + ["reach-v3"] * 15 + ["pick-place-v3"] * 0
     #phase1 = ["push-v3"] * 15 + ["reach-v3"] * 15 
-    return [phase0]
+    return [phase0]      # If you implement new phases, make sure you include them in the return list -> return [phase0, phase1...]   
 
 def mt10_curriculum_phases():
 
@@ -601,7 +604,7 @@ def mt10_curriculum_phases():
     #    ["pick-place-v3"] * 2
     #)
   
-    return [phase0]
+    return [phase0]      # If you implement new phases, make sure you include them in the return list -> return [phase0, phase1...]
 ```
 
 ### Custom Task Difficulties (**V2**)
@@ -639,7 +642,7 @@ SECOND_MODEL_PATH = f"./metaworld_models/SAC_{MT_N}_10M"
 SECOND_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_10M_replay.pkl" # directory where the buffer of the SECOND_PHASE is saved
 
 # Load replay buffer (when continuing training)
-CONTINUE_TRAINING = True    # False = start new (FIRST_PHASE), True = load model (SECOND_PHASE)
+CONTINUE_TRAINING = True    # False = start new (FIRST_PHASE), True = load FIRST_PHASE model to train SECOND_PHASE
 USE_REPLAY_BUFFER = True    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
 ```
 
@@ -758,17 +761,6 @@ SEL_TRAIN_PHASE = 2  # Phase 2: 5M → 10M steps
 # ./metaworld_models/MT10_SAC_5M.zip
 # ./metaworld_models/MT10_SAC_5M_replay.pkl
 ```
-
-### Example 5: Resume Training (**V1**)
-
-```python
-CONTINUE_TRAINING = True # True = load model (SECOND_PHASE)
-
-# Model and buffer automatically loaded from:
-FIRST_MODEL_PATH = f"./metaworld_models/SAC_{MT_N}_9M"
-FIRST_BUFFER_PATH = f"./metaworld_models/SAC_{MT_N}_9M_replay.pkl"
-```
-
 ---
 
 
