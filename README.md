@@ -138,7 +138,7 @@ CURRICULUM = True # Using curriculum_phases()
 MULTI_HEAD = False # Using "MlpPolicy" (standard)
 ```
 
-### 3. Multihead Policy
+### 3. Multi-head Critic
 
 Train with individual Q-functions for each task:
 
