@@ -186,7 +186,6 @@ EXPERIMENT = "MT3"
 **Configuration** (**V1**):
 ```python
 MT_N = "MT3"
-CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
 ```
 
 ---
