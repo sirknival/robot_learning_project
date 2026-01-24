@@ -2,7 +2,7 @@
 
 During the development of the Meta-World Multi-Task Training Framework, two different variants were developed in parallel. The first variant is denoted as **V1**  and implemented in `train_mt_multihead.py`, while the second variant is denoted as **V2** and implemented in `train_mt_transferLearning.py`.
 
-If a section header is labeled with **V2**, the described content refers exclusively to the first variant. Likewise, headers labeled with **V1** refer exclusively to the second variant. Sections marked with **V2 & V1** indicate that the described concepts or implementations apply to both variants.
+If a section header is labeled with **V1**, the described content refers exclusively to the first variant. Likewise, headers labeled with **V2** refer exclusively to the second variant. Sections marked with **V1 & V2** indicate that the described concepts or implementations apply to both variants.
 
 
 ## 📋 Table of Contents
@@ -21,7 +21,7 @@ If a section header is labeled with **V2**, the described content refers exclusi
 
 ## Overview
 
-Training frameworks for Meta-World robotic manipulation tasks. Both (**V2 & V1**) support:
+Training frameworks for Meta-World robotic manipulation tasks. Both (**V1 & V2**) support:
 - **Curriculum Learning**: Progressive task introduction with automatic stage transitions
 - **Parallel Training**: Multi-process environments for faster training
 
@@ -36,7 +36,7 @@ Training frameworks for Meta-World robotic manipulation tasks. Both (**V2 & V1**
 - **One Algorithm**: SAC
 
 
-### Supported Tasks (MT10) (**V2 & V1**)
+### Supported Tasks (MT10) (**V1 & V2**)
 
 1. `reach-v3` - Simple reaching task
 2. `push-v3` - Push object to target
@@ -51,7 +51,7 @@ Training frameworks for Meta-World robotic manipulation tasks. Both (**V2 & V1**
 
 ---
 
-## Installation (**V2 & V1**)
+## Installation (**V1 & V2**)
 
 ```bash
 # Clone the repository
@@ -172,7 +172,7 @@ N_PARALLEL_ENVS = 1    # Number of parallel environments
 
 ---
 
-### MT3 - Three Task Training (**V2 & V1**)
+### MT3 - Three Task Training (**V1 & V2**)
 
 **Use Case**: Train on a subset of related tasks, defined in task description.
 
@@ -191,7 +191,7 @@ CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3"]
 
 ---
 
-### MT10 - Full Multi-Task Training (**V2 & V1**)
+### MT10 - Full Multi-Task Training (**V1 & V2**)
 
 **Use Case**: Train a general-purpose policy across all tasks.
 
@@ -210,7 +210,7 @@ CURRICULUM = False # Default tasks: ["reach-v3", "push-v3", "pick-place-v3", "do
 
 ---
 
-## Configuration Options (**V2 & V1**)
+## Configuration Options (**V1 & V2**)
 
 ### Basic Settings (**V2**)
 
@@ -642,7 +642,7 @@ CONTINUE_TRAINING = True    # False = start new (FIRST_PHASE), True = load model
 USE_REPLAY_BUFFER = True    # False = train without replay buffer, True = load model+replay ---> only SECOND_PHASE
 ```
 
-### Custom Evaluation (**V2 & V1**)
+### Custom Evaluation (**V1 & V2**)
 
 ```python
 # Modify evaluation frequency
